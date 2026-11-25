@@ -85,6 +85,14 @@
   .m { animation: fall 2.8s cubic-bezier(.55,0,.8,.6) infinite; }
   @keyframes fall { from { transform: translateY(-30px); } to { transform: translateY(150px); } }
   @media (prefers-reduced-motion: reduce) { .m { animation: none; transform: translateY(60px); } a.card { transition: none; } }
+  /* slices sliding apart in the Tranche thumbnail */
+  .ta { animation: ta 3.6s ease-in-out infinite; } .tb { animation: tb 3.6s ease-in-out infinite; }
+  .tl { animation: tl 3.6s ease-in-out infinite; } .tc { animation: tc 3.6s ease-out infinite; opacity: 0; }
+  @keyframes ta { 0%,32% { transform: translateX(0) } 48%,82% { transform: translateX(-7px) } 100% { transform: translateX(0) } }
+  @keyframes tb { 0%,32% { transform: translateX(0) } 48%,82% { transform: translateX(7px) } 100% { transform: translateX(0) } }
+  @keyframes tl { 0%,8% { stroke-dashoffset: 90; opacity: 0 } 12% { opacity: 1 } 32% { stroke-dashoffset: 0; opacity: 1 } 40%,100% { opacity: 0 } }
+  @keyframes tc { 0%,32% { opacity: 0; transform: translate(0,0) } 40% { opacity: 1 } 80%,100% { opacity: 0; transform: translate(6px,-8px) } }
+  @media (prefers-reduced-motion: reduce) { .ta, .tb, .tl, .tc { animation: none } .ta { transform: translateX(-4px) } .tb { transform: translateX(4px) } .tl, .tc { opacity: 0 } }
 </style>
 </head>
 <body>
@@ -110,6 +118,31 @@
       <div class="body">
         <h2>Billes</h2>
         <p>Lâche des billes sur un plateau de clous : chaque rebond est une note.</p>
+        <span class="tag">Jouer</span>
+      </div>
+    </a>
+
+    <a class="card" href="jeux/tranche.html">
+      <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect x="26" y="14" width="108" height="72" rx="14" fill="#1b4a58"/>
+        <g class="ta">
+          <polygon points="49,32 83,32 77,82 49,82" fill="#000" opacity=".25" transform="translate(0,5)"/>
+          <polygon points="49,27 83,27 77,77 49,77" fill="#b4564a" transform="translate(0,5)"/>
+          <polygon points="49,27 83,27 77,77 49,77" fill="#ff8f7a" stroke="#ff8f7a" stroke-width="8" stroke-linejoin="round"/>
+          <line x1="83" y1="27" x2="77" y2="77" stroke="#ffe9c9" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <g class="tb">
+          <polygon points="87,32 111,32 111,82 81,82" fill="#000" opacity=".25" transform="translate(0,5)"/>
+          <polygon points="87,27 111,27 111,77 81,77" fill="#b4564a" transform="translate(0,5)"/>
+          <polygon points="87,27 111,27 111,77 81,77" fill="#ff8f7a" stroke="#ff8f7a" stroke-width="8" stroke-linejoin="round"/>
+          <line x1="87" y1="27" x2="81" y2="77" stroke="#ffe9c9" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <line class="tl" x1="104" y1="12" x2="62" y2="90" stroke="#f4efe4" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="90" stroke-dashoffset="90"/>
+        <g fill="#ffe9c9"><circle class="tc" cx="84" cy="40" r="1.6"/><circle class="tc" cx="82" cy="60" r="1.2" style="animation-delay:.15s"/><circle class="tc" cx="86" cy="72" r="1.8" style="animation-delay:.3s"/></g>
+      </svg>
+      <div class="body">
+        <h2>Tranche</h2>
+        <p>Tranche un bloc de savon, de gelée ou de sable d'un seul geste : ça glisse, ça tinte, ça s'écarte.</p>
         <span class="tag">Jouer</span>
       </div>
     </a>
