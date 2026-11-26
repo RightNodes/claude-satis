@@ -1179,7 +1179,7 @@
     const wEff = pen.w * (pulseOn() ? 0.65 + 0.7 * pulseEnv : 1);
     const R1 = wEff * 4.5, spacing = max(0.2 * R1 * (lvl >= 1 ? 1.5 : 1), 1.2);
     const sym = symOf(pen), mir = mirOf(pen);
-    const A1 = 0.085 * glowE() * inkGain * (pulseOn() ? 1 + 0.06 * ampEff() * pulseEnv : 1);
+    const A1 = 0.05 * glowE() * inkGain * (pulseOn() ? 1 + 0.06 * ampEff() * pulseEnv : 1);
     let px = ax, py = ay;
     if (A1 > 0.001) {
       for (let i = 1; i <= n; i++) {
@@ -1212,15 +1212,15 @@
     const tb = tbAt(ex, ey, pen.vEase), disp = S.dispersion;
     const pu = pulseOn();
     const w = pen.w * (pu ? 0.65 + 0.7 * pulseEnv : 1);
-    const lmax = limited() ? 74 : 92;
+    const lmax = limited() ? 62 : 72;
     const gE = glowE();
-    const aMid = 0.26 * gE * inkGain;
-    const aCore = 0.92 * (0.4 + 0.6 * inkGain) * (pu ? 0.7 + 0.3 * pulseEnv : 1);
+    const aMid = 0.16 * gE * inkGain;
+    const aCore = 0.62 * (0.35 + 0.65 * inkGain) * (pu ? 0.7 + 0.3 * pulseEnv : 1);
     const nc = disp > 0.001 ? N : 1;
     for (let k = 0; k < nc; k++) {
       colorAt(tri(frac(tb + 0.5 * disp * k / N)));
       cMid[k] = 'hsl(' + cH.toFixed(1) + ',' + cS.toFixed(1) + '%,' + cL.toFixed(1) + '%)';
-      cCore[k] = 'hsl(' + cH.toFixed(1) + ',' + (cS * 0.85).toFixed(1) + '%,' + min(lmax, cL + 20 + 14 * pen.vEase).toFixed(1) + '%)';
+      cCore[k] = 'hsl(' + cH.toFixed(1) + ',' + (cS * 0.85).toFixed(1) + '%,' + min(lmax, cL + 8 + 10 * pen.vEase).toFixed(1) + '%)';
     }
     const c = pctx;
     c.lineJoin = 'round';
@@ -1553,7 +1553,7 @@
     const lum = sum / cnt;
     peak = pk;
     fill = clamp(lum / 0.35, 0, 1);
-    inkGainT = 1 - 0.75 * smooth(0.28, 0.6, lum);
+    inkGainT = 1 - 0.88 * smooth(0.10, 0.42, lum);
     inkGain += (inkGainT - inkGain) * 0.3;
     droneUpdate();
   }

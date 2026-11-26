@@ -93,6 +93,99 @@
   @keyframes tl { 0%,8% { stroke-dashoffset: 90; opacity: 0 } 12% { opacity: 1 } 32% { stroke-dashoffset: 0; opacity: 1 } 40%,100% { opacity: 0 } }
   @keyframes tc { 0%,32% { opacity: 0; transform: translate(0,0) } 40% { opacity: 1 } 80%,100% { opacity: 0; transform: translate(6px,-8px) } }
   @media (prefers-reduced-motion: reduce) { .ta, .tb, .tl, .tc { animation: none } .ta { transform: translateX(-4px) } .tb { transform: translateX(4px) } .tl, .tc { opacity: 0 } }
+
+  /* bubbles popping in the Bulles thumbnail (classes préfixées bu-) */
+  .bu-b, .bu-c, .bu-r { transform-box: fill-box; transform-origin: center; animation-duration: 5.6s; animation-iteration-count: infinite; animation-delay: calc(var(--o) * .14s); }
+  .bu-b { animation-name: bu-pop; }
+  .bu-c { animation-name: bu-cr; }
+  .bu-r { animation-name: bu-rg; }
+  @keyframes bu-pop {
+    0%, 6% { transform: scale(1); opacity: 1 }
+    8% { transform: scale(1.22); opacity: .9 }
+    11%, 68% { transform: scale(.2); opacity: 0 }
+    80% { transform: scale(1.08); opacity: 1 }
+    88% { transform: scale(.97) }
+    100% { transform: scale(1); opacity: 1 }
+  }
+  @keyframes bu-cr { 0%, 7% { opacity: 0; transform: scale(.7) } 12%, 68% { opacity: .55; transform: scale(1) } 76%, 100% { opacity: 0 } }
+  @keyframes bu-rg { 0%, 7% { opacity: 0; transform: scale(.6) } 8% { opacity: .8 } 22%, 100% { opacity: 0; transform: scale(1.7) } }
+  @media (prefers-reduced-motion: reduce) {
+    .bu-b, .bu-c, .bu-r { animation: none }
+    .bu-r { opacity: 0 }
+    .bu-p .bu-b { opacity: 0 }
+    .bu-p .bu-c { opacity: .55 }
+  }
+
+
+  /* miniature « Sable » : cycle de 6 s */
+  .sa-g { stroke-dasharray: 100; stroke-dashoffset: 100; animation: sa-draw 6s ease-in-out infinite; }
+  @keyframes sa-draw { 0% { stroke-dashoffset: 100; } 36%, 100% { stroke-dashoffset: 0; } }
+  .sa-e, .sa-w { animation: sa-erase 6s ease-in-out infinite; }
+  .sa-w { opacity: 1; }
+  @keyframes sa-erase { 0%, 83% { transform: translateX(0); } 100% { transform: translateX(180px); } }
+  .sa-p, .sa-r { transform-origin: 108px 64px; transform-box: view-box; }
+  .sa-p { animation: sa-drop 6s ease-in infinite; }
+  @keyframes sa-drop {
+    0%, 35% { opacity: 0; transform: translateY(-18px) scale(1.2); }
+    40% { opacity: 1; transform: translateY(0) scale(1); }
+    42% { opacity: 1; transform: translateY(0) scale(1.05, .95); }
+    46%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(0) scale(1); }
+  }
+  .sa-r { animation: sa-ring 6s ease-out infinite; opacity: 0; }
+  @keyframes sa-ring {
+    0%, 41% { opacity: 0; transform: scale(.55); }
+    60%, 90% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  .sa-k { animation: sa-rake 6s linear infinite; }
+  @keyframes sa-rake { 0%, 1% { opacity: 0; } 2%, 35% { opacity: 1; } 36%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sa-g, .sa-p, .sa-r, .sa-e, .sa-w, .sa-k { animation: none; }
+    .sa-g { stroke-dashoffset: 0; }
+    .sa-p { opacity: 1; transform: none; }
+    .sa-r { opacity: 1; transform: none; }
+    .sa-w, .sa-k { opacity: 0; }
+  }
+
+
+/* arms of light drawing themselves in the Mandala thumbnail */
+.ma-r { transform-box: view-box; transform-origin: 80px 50px; animation: ma-spin 48s linear infinite; }
+.ma-g { stroke-dasharray: 100 200; animation: ma-draw 7s cubic-bezier(.45,0,.25,1) infinite; }
+.ma-d { animation: ma-dot 7s ease-in-out infinite; animation-delay: inherit; }
+.ma-c { transform-box: fill-box; transform-origin: center; animation: ma-pulse 3.5s ease-in-out infinite; }
+@keyframes ma-spin { to { transform: rotate(360deg) } }
+@keyframes ma-draw {
+  0% { stroke-dashoffset: 100; opacity: 0 }
+  4% { opacity: 1 }
+  46% { stroke-dashoffset: 0 }
+  78% { stroke-dashoffset: 0; opacity: 1 }
+  94% { stroke-dashoffset: 0; opacity: 0 }
+  100% { stroke-dashoffset: 100; opacity: 0 }
+}
+@keyframes ma-dot { 0%,40% { opacity: 0 } 50%,78% { opacity: 1 } 94%,100% { opacity: 0 } }
+@keyframes ma-pulse { 0%,100% { transform: scale(1); opacity: .85 } 50% { transform: scale(1.5); opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  .ma-r, .ma-g, .ma-d, .ma-c { animation: none }
+  .ma-g { stroke-dashoffset: 0; opacity: 1 }
+  .ma-d { opacity: 1 }
+}
+
+
+  .do-d { fill: #f4efe4; transform-box: fill-box; transform-origin: 100% 50%; animation: do-fall 6s ease-in-out infinite; animation-delay: calc(var(--i) * 0.09s); }
+  .do-sh { fill: #000 !important; opacity: .25; transform: translate(1.2px, 1.6px); }
+  @keyframes do-fall {
+    0%, 8%  { transform: translateX(0) scaleX(1);       fill: #f4efe4; }
+    13%     { transform: translateX(6.3px) scaleX(3.4); fill: var(--c); }
+    72%     { transform: translateX(6.3px) scaleX(3.4); fill: var(--c); }
+    80%     { transform: translateX(0) scaleX(1);       fill: #f4efe4; }
+    100%    { transform: translateX(0) scaleX(1);       fill: #f4efe4; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .do-d { animation: none; }
+    .do-d:nth-child(-n+12) { transform: translateX(6.3px) scaleX(3.4); fill: var(--c); }
+  }
+
 </style>
 </head>
 <body>
@@ -143,6 +236,290 @@
       <div class="body">
         <h2>Tranche</h2>
         <p>Tranche un bloc de savon, de gelée ou de sable d'un seul geste : ça glisse, ça tinte, ça s'écarte.</p>
+        <span class="tag">Jouer</span>
+      </div>
+    </a>
+
+    <a class="card" href="jeux/bulles.html">
+  <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="bu-g" cx="35%" cy="30%" r="75%">
+        <stop offset="0" stop-color="#fff" stop-opacity=".5"/>
+        <stop offset=".4" stop-color="#7fd6f0" stop-opacity=".3"/>
+        <stop offset="1" stop-color="#7fd6f0" stop-opacity=".75"/>
+      </radialGradient>
+      <radialGradient id="bu-gd" cx="35%" cy="30%" r="75%">
+        <stop offset="0" stop-color="#fff1c1" stop-opacity=".8"/><stop offset="1" stop-color="#ffd166" stop-opacity=".95"/>
+      </radialGradient>
+    </defs>
+    <rect x="8" y="8" width="144" height="84" rx="14" fill="#f4efe4" opacity=".045"/>
+        <g transform="translate(30 24.0)" style="--o:0">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g class="bu-p" transform="translate(50 24.0)" style="--o:1">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(70 24.0)" style="--o:2">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(90 24.0)" style="--o:3">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(110 24.0)" style="--o:4">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(130 24.0)" style="--o:5">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(40 41.3)" style="--o:9">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g class="bu-p" transform="translate(60 41.3)" style="--o:8">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(80 41.3)" style="--o:21">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#ffd166" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-gd)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/><path d="M-.8 -6.2L0 -3.4L.8 -6.2L3.6 -5.4L.8 -4.6L0 -1.8L-.8 -4.6L-3.6 -5.4Z" transform="translate(-2.2 -2.2) scale(.9)" fill="#fff" opacity=".95"/></g>
+        </g>
+        <g transform="translate(100 41.3)" style="--o:7">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(120 41.3)" style="--o:6">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(30 58.6)" style="--o:10">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(50 58.6)" style="--o:11">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g class="bu-p" transform="translate(70 58.6)" style="--o:12">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g class="bu-p" transform="translate(90 58.6)" style="--o:13">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(110 58.6)" style="--o:14">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(130 58.6)" style="--o:15">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(40 75.9)" style="--o:20">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(60 75.9)" style="--o:19">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g class="bu-p" transform="translate(80 75.9)" style="--o:18">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(100 75.9)" style="--o:17">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+        <g transform="translate(120 75.9)" style="--o:16">
+          <circle class="bu-c" r="7.5" fill="#0f3a46" opacity="0"/>
+          <circle class="bu-r" r="9" fill="none" stroke="#fff" stroke-width="1.5" opacity="0"/>
+          <g class="bu-b"><circle r="9" fill="url(#bu-g)"/><ellipse cx="-3" cy="-3.6" rx="2.6" ry="1.5" transform="rotate(-35 -3 -3.6)" fill="#fff" opacity=".9"/></g>
+        </g>
+  </svg>
+  <div class="body">
+    <h2>Bulles</h2>
+    <p>Éclate une plaque de bulles du bout du doigt : chaque pop est une note, et plus tu enchaînes, plus ça chante.</p>
+    <span class="tag">Jouer</span>
+  </div>
+</a>
+
+    <a class="card" href="jeux/sable.html">
+  <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="sa-g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#f0d3b4"/><stop offset=".5" stop-color="#d4a888"/><stop offset="1" stop-color="#b98e86"/>
+      </linearGradient>
+      <linearGradient id="sa-wg" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <radialGradient id="sa-st" cx=".35" cy=".3" r=".8">
+        <stop offset="0" stop-color="#8a8f9a"/><stop offset="1" stop-color="#2f323a"/>
+      </radialGradient>
+      
+      <mask id="sa-m" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="100">
+        <rect x="0" y="0" width="160" height="100" fill="#fff"/>
+        <rect class="sa-e" x="-220" y="-10" width="220" height="120" fill="#000"/>
+      </mask>
+      <path id="sa-row1" d="M-4,14 Q16,6 36,14 T76,14 T116,14 T164,14"/>
+      <path id="sa-row2" d="M-4,22 Q16,14 36,22 T76,22 T116,22 T164,22"/>
+      <path id="sa-row3" d="M-4,30 Q16,22 36,30 T76,30 T116,30 T164,30"/>
+      <path id="sa-row4" d="M-4,38 Q16,30 36,38 T76,38 T116,38 T164,38"/>
+    </defs>
+    <rect width="160" height="100" fill="url(#sa-g)"/>
+
+    
+    <g mask="url(#sa-m)">
+      <g>
+        <path class="sa-g" pathLength="100" d="M-4,14 Q16,6 36,14 T76,14 T116,14 T164,14" fill="none" stroke="#6b4a52" stroke-opacity=".6" stroke-width="3" stroke-linecap="round" transform="translate(0,1.2)"/>
+        <path class="sa-g" pathLength="100" d="M-4,14 Q16,6 36,14 T76,14 T116,14 T164,14" fill="none" stroke="#fff0d8" stroke-opacity=".9" stroke-width="2.2" stroke-linecap="round" transform="translate(0,-1.4)"/>
+        <path class="sa-g" pathLength="100" d="M-4,14 Q16,6 36,14 T76,14 T116,14 T164,14" fill="none" stroke="#c79a78" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <g>
+        <path class="sa-g" style="animation-delay:.1s" pathLength="100" d="M-4,22 Q16,14 36,22 T76,22 T116,22 T164,22" fill="none" stroke="#6b4a52" stroke-opacity=".6" stroke-width="3" stroke-linecap="round" transform="translate(0,1.2)"/>
+        <path class="sa-g" style="animation-delay:.1s" pathLength="100" d="M-4,22 Q16,14 36,22 T76,22 T116,22 T164,22" fill="none" stroke="#fff0d8" stroke-opacity=".9" stroke-width="2.2" stroke-linecap="round" transform="translate(0,-1.4)"/>
+        <path class="sa-g" style="animation-delay:.1s" pathLength="100" d="M-4,22 Q16,14 36,22 T76,22 T116,22 T164,22" fill="none" stroke="#c79a78" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <g>
+        <path class="sa-g" style="animation-delay:.2s" pathLength="100" d="M-4,30 Q16,22 36,30 T76,30 T116,30 T164,30" fill="none" stroke="#6b4a52" stroke-opacity=".6" stroke-width="3" stroke-linecap="round" transform="translate(0,1.2)"/>
+        <path class="sa-g" style="animation-delay:.2s" pathLength="100" d="M-4,30 Q16,22 36,30 T76,30 T116,30 T164,30" fill="none" stroke="#fff0d8" stroke-opacity=".9" stroke-width="2.2" stroke-linecap="round" transform="translate(0,-1.4)"/>
+        <path class="sa-g" style="animation-delay:.2s" pathLength="100" d="M-4,30 Q16,22 36,30 T76,30 T116,30 T164,30" fill="none" stroke="#c79a78" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <g>
+        <path class="sa-g" style="animation-delay:.3s" pathLength="100" d="M-4,38 Q16,30 36,38 T76,38 T116,38 T164,38" fill="none" stroke="#6b4a52" stroke-opacity=".6" stroke-width="3" stroke-linecap="round" transform="translate(0,1.2)"/>
+        <path class="sa-g" style="animation-delay:.3s" pathLength="100" d="M-4,38 Q16,30 36,38 T76,38 T116,38 T164,38" fill="none" stroke="#fff0d8" stroke-opacity=".9" stroke-width="2.2" stroke-linecap="round" transform="translate(0,-1.4)"/>
+        <path class="sa-g" style="animation-delay:.3s" pathLength="100" d="M-4,38 Q16,30 36,38 T76,38 T116,38 T164,38" fill="none" stroke="#c79a78" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    
+    <g class="sa-r" style="animation-delay:0s"><circle cx="108" cy="63.2" r="14" fill="none" stroke="#fff0d8" stroke-opacity=".7" stroke-width="1.6"/><circle cx="108" cy="64.8" r="14" fill="none" stroke="#5b3f4a" stroke-opacity=".45" stroke-width="1.4"/></g>
+    <g class="sa-r" style="animation-delay:.1s"><circle cx="108" cy="63.2" r="20" fill="none" stroke="#fff0d8" stroke-opacity=".7" stroke-width="1.6"/><circle cx="108" cy="64.8" r="20" fill="none" stroke="#5b3f4a" stroke-opacity=".45" stroke-width="1.4"/></g>
+    <g class="sa-r" style="animation-delay:.2s"><circle cx="108" cy="63.2" r="26" fill="none" stroke="#fff0d8" stroke-opacity=".7" stroke-width="1.6"/><circle cx="108" cy="64.8" r="26" fill="none" stroke="#5b3f4a" stroke-opacity=".45" stroke-width="1.4"/></g>
+    <g class="sa-r" style="animation-delay:.3s"><circle cx="108" cy="63.2" r="32" fill="none" stroke="#fff0d8" stroke-opacity=".7" stroke-width="1.6"/><circle cx="108" cy="64.8" r="32" fill="none" stroke="#5b3f4a" stroke-opacity=".45" stroke-width="1.4"/></g>
+    <g class="sa-p">
+      <ellipse cx="111" cy="67" rx="9.5" ry="8" fill="rgba(60,35,70,.35)"/>
+      <ellipse cx="108" cy="64" rx="9" ry="7.5" fill="url(#sa-st)"/>
+      <ellipse cx="105.5" cy="61.5" rx="2.8" ry="1.8" fill="#fff" opacity=".4"/>
+    </g>
+
+    
+    <g class="sa-k" fill="#ffd166">
+      <circle r="1.6"><animateMotion dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.36;1" keyPoints="0;1;1" keySplines=".42 0 .58 1;0 0 1 1"><mpath href="#sa-row1"/></animateMotion></circle>
+      <circle r="1.6"><animateMotion dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.36;1" keyPoints="0;1;1" keySplines=".42 0 .58 1;0 0 1 1"><mpath href="#sa-row2"/></animateMotion></circle>
+      <circle r="1.6"><animateMotion dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.36;1" keyPoints="0;1;1" keySplines=".42 0 .58 1;0 0 1 1"><mpath href="#sa-row3"/></animateMotion></circle>
+      <circle r="1.6"><animateMotion dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.36;1" keyPoints="0;1;1" keySplines=".42 0 .58 1;0 0 1 1"><mpath href="#sa-row4"/></animateMotion></circle>
+    </g>
+
+    
+    <g class="sa-w">
+      <rect x="-60" y="0" width="60" height="100" fill="url(#sa-wg)"/>
+      <rect x="-1.2" y="0" width="1.2" height="100" fill="#fff" opacity=".8"/>
+    </g>
+  </svg>
+  <div class="body">
+    <h2>Sable</h2>
+    <p>Trace des sillons dans un jardin de sable : la lumière rasante sculpte chaque relief et les galets font naître des ondes.</p>
+    <span class="tag">Jouer</span>
+  </div>
+</a>
+
+    <a class="card" href="jeux/mandala.html">
+  <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="ma-bg" cx="80" cy="50" r="52" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#1d5667"/><stop offset="1" stop-color="#0c2f3a" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="ma-gr" x1="86" y1="0" x2="128" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#5ee7e0"/><stop offset=".55" stop-color="#9d7bff"/><stop offset="1" stop-color="#ff7ac8"/>
+      </linearGradient>
+      <g id="ma-a" fill="none" stroke="url(#ma-gr)" stroke-linejoin="round">
+        <path pathLength="100" d="M88 50C96 38 112 38 124 50C112 62 96 62 88 50"/>
+        <path pathLength="100" d="M94 50Q104 30 119 39M94 50Q104 70 119 61"/>
+      </g>
+    </defs>
+    <circle cx="80" cy="50" r="50" fill="url(#ma-bg)"/>
+    <circle cx="80" cy="50" r="46" fill="none" stroke="#f4efe4" stroke-opacity=".07"/>
+    <g class="ma-r">
+      <g class="ma-g" style="animation-delay:-0s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(45 80 50)" style="animation-delay:-.45s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(90 80 50)" style="animation-delay:-.9s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(135 80 50)" style="animation-delay:-1.35s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(180 80 50)" style="animation-delay:-1.8s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(225 80 50)" style="animation-delay:-2.25s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(270 80 50)" style="animation-delay:-2.7s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+      <g class="ma-g" transform="rotate(315 80 50)" style="animation-delay:-3.15s"><use href="#ma-a" stroke-width="6" opacity=".14"/><use href="#ma-a" stroke-width="3" opacity=".35"/><use href="#ma-a" stroke-width="1.2"/><circle class="ma-d" cx="127" cy="50" r="1.7" fill="#fff"/></g>
+    </g>
+    <circle class="ma-c" cx="80" cy="50" r="2.6" fill="#fff"/>
+  </svg>
+  <div class="body">
+    <h2>Mandala</h2>
+    <p>Trace un petit geste de lumière : il se déploie en mandala, éclot en fleur et chante à chaque note.</p>
+    <span class="tag">Jouer</span>
+  </div>
+</a>
+
+    <a class="card" href="jeux/dominos.html">
+      <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect x="26" y="14" width="108" height="72" rx="14" fill="#1b4a58"/>
+        <g>
+          <g transform="translate(16.2 71.6) rotate(-62)"><g class="do-d" style="--i:0;--c:#ff6b6b"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(20.0 64.7) rotate(-60)"><g class="do-d" style="--i:1;--c:#ff7a66"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(24.5 57.4) rotate(-56)"><g class="do-d" style="--i:2;--c:#ff8961"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(29.3 50.7) rotate(-52)"><g class="do-d" style="--i:3;--c:#ff985c"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(34.6 44.5) rotate(-47)"><g class="do-d" style="--i:4;--c:#ffa75c"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(40.7 38.5) rotate(-41)"><g class="do-d" style="--i:5;--c:#ffb660"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(47.3 33.6) rotate(-32)"><g class="do-d" style="--i:6;--c:#ffc463"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(54.7 30.0) rotate(-19)"><g class="do-d" style="--i:7;--c:#fbd267"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(62.9 28.6) rotate(0)"><g class="do-d" style="--i:8;--c:#ded76d"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(70.9 30.2) rotate(24)"><g class="do-d" style="--i:9;--c:#c0dc72"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(77.7 35.1) rotate(47)"><g class="do-d" style="--i:10;--c:#a3e278"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(82.4 41.8) rotate(63)"><g class="do-d" style="--i:11;--c:#8be089"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(85.4 49.8) rotate(74)"><g class="do-d" style="--i:12;--c:#75dc9f"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(87.6 57.6) rotate(71)"><g class="do-d" style="--i:13;--c:#5fd9b5"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(91.0 65.3) rotate(61)"><g class="do-d" style="--i:14;--c:#50d3c9"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(95.9 72.0) rotate(45)"><g class="do-d" style="--i:15;--c:#54cbda"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(102.7 76.5) rotate(21)"><g class="do-d" style="--i:16;--c:#58c2eb"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(110.9 77.5) rotate(-8)"><g class="do-d" style="--i:17;--c:#5bb9fd"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(118.6 74.7) rotate(-30)"><g class="do-d" style="--i:18;--c:#69adff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(125.2 69.5) rotate(-44)"><g class="do-d" style="--i:19;--c:#78a0ff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(130.6 63.4) rotate(-53)"><g class="do-d" style="--i:20;--c:#8792ff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(135.3 56.5) rotate(-59)"><g class="do-d" style="--i:21;--c:#988bff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(139.4 49.2) rotate(-63)"><g class="do-d" style="--i:22;--c:#ac8bff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(143.0 41.4) rotate(-67)"><g class="do-d" style="--i:23;--c:#c18cff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+          <g transform="translate(146.0 34.0) rotate(-69)"><g class="do-d" style="--i:24;--c:#d58cff"><rect class="do-sh" x="-1.3" y="-3.6" width="2.6" height="8" rx="0.8"/><rect x="-1.3" y="-4" width="2.6" height="8" rx="0.8"/></g></g>
+        </g>
+      </svg>
+      <div class="body">
+        <h2>Dominos</h2>
+        <p>Trace des chemins de dominos, touche le premier : la vague claque, grimpe en gamme et dévoile ses couleurs.</p>
         <span class="tag">Jouer</span>
       </div>
     </a>
