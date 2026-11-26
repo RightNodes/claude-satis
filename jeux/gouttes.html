@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Gouttes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  /* Idea: a dark, glossy water surface. Each drop sends rings across it; they cross, bounce off the edges
+     and light up in interference patterns under a raking light. Every drop plays a note. */
+  :root {
+    --bg: #0f3a46;
+    --peg: #3a7686;
+    --ink: #f4efe4;
+    --ink-2: #a9c9d0;
+    --accent: #ffd166;
+    --panel: color-mix(in srgb, var(--ink) 8%, var(--bg));
+    --line: color-mix(in srgb, var(--ink) 24%, transparent);
+    --soft: color-mix(in srgb, var(--ink) 9%, transparent);
+    --font: "Gabarito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #0b2f3a;
+    color: var(--ink);
+    font-family: var(--font);
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  #vig {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.38) 100%);
+  }
+  body.vig-off #vig { display: none; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: max(18px, env(safe-area-inset-top)) 20px 18px max(20px, env(safe-area-inset-left));
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: calc(100vw - 190px);
+    box-sizing: border-box;
+    z-index: 5;
+  }
+  .back {
+    align-self: flex-start;
+    margin: 0 0 10px;
+    font: 500 13px/1 var(--font);
+    color: var(--ink-2);
+    text-decoration: none;
+    pointer-events: auto;
+    padding: 6px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .back:hover { color: var(--ink); }
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 6vw, 46px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .count {
+    margin: 6px 0 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .hint {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent);
+    transition: opacity 0.8s ease;
+  }
+  .hint.gone { opacity: 0; }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 4;
+    max-width: calc(100vw - 40px);
+    text-align: center;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .toolrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    max-width: 560px;
+    pointer-events: none;
+  }
+  .toolrow button { pointer-events: auto; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tools button, .btn {
+    font: 500 14px/1 var(--font);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 13px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .tools button:hover, .btn:hover { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .tools button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    font-weight: 800;
+  }
+  .bar {
+    position: fixed;
+    top: max(18px, env(safe-area-inset-top));
+    right: max(20px, env(safe-area-inset-right));
+    display: flex;
+    gap: 8px;
+    z-index: 6;
+  }
+  .iconbtn {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+  .iconbtn:hover { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .iconbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .iconbtn svg .fill { fill: currentColor; stroke: none; }
+  button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, canvas:focus-visible, .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  canvas:focus-visible { outline-offset: -5px; }
+  .fps {
+    position: fixed;
+    top: 66px;
+    right: 20px;
+    z-index: 4;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    text-align: right;
+  }
+  .fps[hidden] { display: none; }
+  .ghost {
+    display: none;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 30;
+    opacity: 0.25;
+  }
+  .ghost:hover, .ghost:focus-visible { opacity: 1; }
+  body.ui-hidden header, body.ui-hidden .bar, body.ui-hidden .drawer, body.ui-hidden .fps, body.ui-hidden .toast { display: none; }
+  body.ui-hidden .ghost { display: grid; }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(380px, 100vw);
+    box-sizing: border-box;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 16px 18px 32px;
+    z-index: 20;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+  .drawer.open { visibility: visible; transform: none; transition: transform 0.25s ease; }
+  .dhead { display: flex; align-items: center; justify-content: space-between; }
+  .dhead h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  summary { cursor: pointer; font-size: 16px; font-weight: 800; color: var(--accent); padding: 4px 0; }
+  .secbody { margin-top: 12px; display: flex; flex-direction: column; gap: 13px; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .row output { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .row input[type="range"] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--accent); }
+  .row select {
+    grid-column: 1 / -1;
+    font: 500 14px var(--font);
+    color: var(--ink);
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .row select option { color: #111; }
+  .row.tog { cursor: pointer; }
+  .row.tog input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .note { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+  .keys { margin: 22px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+
+  @media (max-width: 639px) {
+    .iconbtn { width: 44px; height: 44px; }
+    header { max-width: none; width: 100%; padding-top: max(14px, env(safe-area-inset-top)); }
+    .back { margin-bottom: 6px; }
+    .count { margin-top: 4px; }
+    .bar { gap: 6px; right: max(12px, env(safe-area-inset-right)); }
+    .toolrow {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      margin: 0;
+      max-width: none;
+      padding: 0 8px;
+      justify-content: center;
+      z-index: 5;
+    }
+    .tools { justify-content: center; }
+    .tools button, .btn { min-height: 44px; padding: 8px 11px; font-size: 13.5px; }
+    .toast { bottom: calc(150px + env(safe-area-inset-bottom)); }
+    .fps { top: 70px; right: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .drawer, .drawer.open, .hint, .toast, #vig { transition: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="Surface d'eau. Clique ou glisse pour lâcher des gouttes. Au clavier : flèches pour placer le curseur, espace pour lâcher une goutte."></canvas>
+<div id="vig" aria-hidden="true"></div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+<header>
+  <a class="back" href="../">← Galerie</a>
+  <h1>gouttes</h1>
+  <p class="count" id="count"><span id="countTxt">0 goutte</span></p>
+  <p class="hint" id="hint">Touche l'eau.</p>
+  <div class="toolrow" id="toolrow">
+    <div class="tools" role="group" aria-label="Actions">
+      <button type="button" id="btnRain" aria-pressed="false" title="Pluie (R)">Pluie</button>
+      <button type="button" id="btnCalm" title="Calmer l'eau (C)">Calmer</button>
+    </div>
+  </div>
+</header>
+<p class="hint toast gone" id="toast" aria-hidden="true"></p>
+<div class="fps" id="fps" hidden></div>
+<div class="bar">
+  <button class="iconbtn" id="btnPause" type="button" aria-label="Mettre en pause" title="Pause (P)"></button>
+  <button class="iconbtn" id="btnSound" type="button" aria-label="Couper le son" title="Son (M)"></button>
+  <button class="iconbtn" id="btnSet" type="button" aria-label="Ouvrir les réglages" aria-expanded="false" aria-controls="drawer" title="Réglages"></button>
+</div>
+<button class="iconbtn ghost" id="btnShow" type="button" aria-label="Afficher l'interface" title="Afficher l'interface (H)"></button>
+<aside class="drawer" id="drawer" aria-label="Réglages">
+  <div class="dhead">
+    <h2>Réglages</h2>
+    <button class="iconbtn" id="btnClose" type="button" aria-label="Fermer les réglages"></button>
+  </div>
+  <div id="panel"></div>
+  <p class="keys">Raccourcis : flèches déplacent le curseur (Maj : plus loin), espace ou entrée lâchent une goutte (maintenir espace : galet), R pluie, C calmer, P pause, M son, H cache l'interface, I images par seconde, F plein écran, Échap ferme ce panneau.</p>
+</aside>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('c');
+  const ctx = canvas.getContext('2d');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const nrm = (x, y, z) => { const l = Math.hypot(x, y, z); return [x / l, y / l, z / l]; };
+  const [Lx, Ly, Lz] = nrm(-0.45, -0.6, 0.66);
+  const [Hx, Hy, Hz] = nrm(Lx, Ly, Lz + 1);
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const PALETTES = {
+    lagon: ['Lagon', { deep: [11, 47, 58], surf: [29, 106, 126], spec: [255, 250, 235], sky: [200, 240, 250] }],
+    nuit: ['Nuit', { deep: [7, 15, 36], surf: [27, 47, 107], spec: [190, 205, 255], sky: [150, 170, 255] }],
+    encre: ['Encre', { deep: [12, 12, 16], surf: [58, 58, 72], spec: [240, 240, 245], sky: [200, 200, 215] }],
+    aurore: ['Aurore', { deep: [27, 15, 46], surf: [122, 61, 140], spec: [255, 200, 230], sky: [255, 180, 220] }],
+  };
+  const CALMS = { vite: ['Vite apaisée', 0.990], normal: ['Normal', 0.9945], longtemps: ['Longtemps agitée', 0.9985] };
+  const WALLS = { abs: ['Absorbants'], refl: ['Réfléchissants'] };
+  const SCALES = {
+    pentamaj: ['Pentatonique majeure', [0, 2, 4, 7, 9, 12, 14, 16, 19, 21]],
+    pentamin: ['Pentatonique mineure', [0, 3, 5, 7, 10, 12, 15, 17, 19, 22]],
+    tons: ['Tons entiers', [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]],
+    carillons: ['Carillons', [0, 4, 7, 12, 16, 19, 24, 28, 31, 36]],
+  };
+  const DETAILS = { eco: ['Éco (6 px)'], normale: ['Normal (4 px)'], fin: ['Fin (3 px)'] };
+  const CELL = { eco: 6, normale: 4, fin: 3 };
+  const DEF = { palette: 'lagon', calm: 'normal', walls: 'abs', speed: 0.22, rain: false, scale: 'pentamaj', volume: 0.5, sound: true, detail: 'normale' };
+  const KEY = 'gouttes-reglages-v1';
+  const S = Object.assign({}, DEF);
+  function sanitize() {
+    for (const k in DEF) if (typeof S[k] !== typeof DEF[k]) S[k] = DEF[k];
+    if (!Number.isFinite(S.speed)) S.speed = DEF.speed;
+    S.speed = clamp(S.speed, 0.12, 0.24);
+    S.volume = clamp(Number.isFinite(S.volume) ? S.volume : DEF.volume, 0, 1);
+    if (!PALETTES[S.palette]) S.palette = DEF.palette;
+    if (!CALMS[S.calm]) S.calm = DEF.calm;
+    if (!WALLS[S.walls]) S.walls = DEF.walls;
+    if (!SCALES[S.scale]) S.scale = DEF.scale;
+    if (!DETAILS[S.detail]) S.detail = DEF.detail;
+  }
+  try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  sanitize();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
+  let PAL = PALETTES[S.palette][1];
+
+  let W = 0, H = 0, dpr = 1, GW = 0, GH = 0, CX = 1, CY = 1;
+  let h, v, DA, Dc, off, offCtx, img;
+  let calmUntil = 0, raf = 0, energy = 0, prevT = 0;
+  const rings = [], drops = [];
+  let paused = false, nextRain = 0, fpsEma = 60, lowT = 0, showFps = false;
+  let kx = 0, ky = 0, kShow = false;
+
+  /* ---------- grid ---------- */
+  function buildDamp() {
+    const dk = CALMS[S.calm][1];
+    const base = reduced ? Math.min(dk, 0.990) : dk;
+    const band = S.walls === 'abs' ? 10 : 0;
+    DA = new Float32Array(GW * GH);
+    Dc = new Float32Array(GW * GH);
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const d = Math.min(x, y, GW - 1 - x, GH - 1 - y);
+      let dm = base;
+      if (band && d < band) dm = base + (0.93 - base) * ((band - d) / band);
+      DA[y * GW + x] = dm;
+      Dc[y * GW + x] = Math.min(dm, 0.95);
+    }
+  }
+  function layout() {
+    W = innerWidth; H = innerHeight;
+    dpr = Math.min(2, devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    // cellules carrées : au plus 260 cellules par côté, et GW·GH ≤ 36000 (taille de cellule augmentée au besoin)
+    let cell = Math.max(CELL[S.detail], W / 260, H / 260);
+    let gw = Math.round(W / cell), gh = Math.round(H / cell);
+    if (gw * gh > 36000) {
+      cell *= Math.sqrt(gw * gh / 36000);
+      gw = Math.round(W / cell); gh = Math.round(H / cell);
+    }
+    GW = gw; GH = gh; CX = W / GW; CY = H / GH;
+    h = new Float32Array(GW * GH);
+    v = new Float32Array(GW * GH);
+    off = document.createElement('canvas');
+    off.width = GW; off.height = GH;
+    offCtx = off.getContext('2d');
+    img = offCtx.createImageData(GW, GH);
+    buildDamp();
+  }
+
+  /* ---------- wave equation ---------- */
+  function addDrop(x, y, A, sig) {
+    const gx = x / CX, gy = y / CY, R = 4 * sig, R2 = R * R, s2 = sig * sig;
+    const x0 = Math.max(1, Math.floor(gx - R)), x1 = Math.min(GW - 2, Math.ceil(gx + R));
+    const y0 = Math.max(1, Math.floor(gy - R)), y1 = Math.min(GH - 2, Math.ceil(gy + R));
+    for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) {
+      const dx = xx - gx, dy = yy - gy, r2 = dx * dx + dy * dy;
+      if (r2 >= R2) continue;
+      const i = yy * GW + xx;
+      h[i] = clamp(h[i] - A * Math.exp(-r2 / s2), -6, 6);
+    }
+  }
+  function step(now) {
+    const c2 = S.speed, D = now < calmUntil ? Dc : DA;
+    let e = 0;
+    for (let s = 0; s < 2; s++) {
+      for (let y = 1; y < GH - 1; y++) {
+        let i = y * GW + 1;
+        for (let x = 1; x < GW - 1; x++, i++) {
+          const lap = h[i - 1] + h[i + 1] + h[i - GW] + h[i + GW] - 4 * h[i];
+          v[i] = clamp((v[i] + c2 * lap) * D[i], -3, 3);
+        }
+      }
+      for (let y = 1; y < GH - 1; y++) {
+        let i = y * GW + 1;
+        for (let x = 1; x < GW - 1; x++, i++) {
+          const nh = clamp(h[i] + v[i], -6, 6);
+          h[i] = nh;
+          const a = Math.abs(nh) + Math.abs(v[i]);
+          if (a > e) e = a;
+        }
+      }
+    }
+    energy = e;
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    const d = img.data, K = 3.2;
+    for (let y = 0; y < GH; y++) {
+      const yu = y > 0 ? -GW : 0, yd = y < GH - 1 ? GW : 0;
+      const sk = 0.12 * (1 - 0.7 * y / GH);
+      for (let x = 0; x < GW; x++) {
+        const i = y * GW + x;
+        const xl = x > 0 ? i - 1 : i, xr = x < GW - 1 ? i + 1 : i;
+        const hi = h[i];
+        const gx = (h[xr] - h[xl]) * K, gy = (h[i + yd] - h[i + yu]) * K;
+        const inv = 1 / Math.sqrt(gx * gx + gy * gy + 1);
+        const nx = -gx * inv, ny = -gy * inv, nz = inv;
+        const diff = Math.max(0, nx * Lx + ny * Ly + nz * Lz);
+        const sp = Math.pow(Math.max(0, nx * Hx + ny * Hy + nz * Hz), 48);
+        const t = clamp(0.5 + 0.18 * hi, 0, 1);
+        const lap = h[xl] + h[xr] + h[i + yu] + h[i + yd] - 4 * hi;
+        const gl = lap < 0 ? Math.min(40, -lap * 80) : 0;
+        const bf = 0.55 + 0.75 * diff, o = i * 4;
+        d[o] = (PAL.deep[0] + (PAL.surf[0] - PAL.deep[0]) * t) * bf + PAL.spec[0] * 0.9 * sp + PAL.sky[0] * sk;
+        d[o + 1] = (PAL.deep[1] + (PAL.surf[1] - PAL.deep[1]) * t) * bf + PAL.spec[1] * 0.9 * sp + PAL.sky[1] * sk + gl;
+        d[o + 2] = (PAL.deep[2] + (PAL.surf[2] - PAL.deep[2]) * t) * bf + PAL.spec[2] * 0.9 * sp + PAL.sky[2] * sk + gl;
+        d[o + 3] = 255;
+      }
+    }
+    offCtx.putImageData(img, 0, 0);
+  }
+  function draw(now) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (let k = rings.length - 1; k >= 0; k--) {
+      const r = rings[k], p = (now - r.t0) / r.life;
+      if (p >= 1) { rings.splice(k, 1); continue; }
+      const rad = r.r0 + (r.r1 - r.r0) * (1 - Math.pow(1 - p, 3));
+      ctx.strokeStyle = 'rgba(255, 246, 228, ' + (0.7 * (1 - p)).toFixed(3) + ')';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, rad, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // gouttelettes : trajectoire parabolique, t en secondes depuis l'éclaboussure
+    ctx.fillStyle = '#fff6e4';
+    for (let k = drops.length - 1; k >= 0; k--) {
+      const p = drops[k], t = (now - p.t0) / 1000;
+      if (t >= p.life) { drops.splice(k, 1); continue; }
+      const x = p.x + p.vx * t, y = p.y + p.vy * t + 0.5 * 1100 * t * t;
+      ctx.globalAlpha = 0.8 * (1 - t / p.life);
+      ctx.beginPath();
+      ctx.arc(x, y, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (kShow && !paused) {
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(kx, ky, 13, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(kx, ky, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffd166';
+      ctx.fill();
+    }
+  }
+  function frame(now) {
+    raf = 0;
+    const dt = prevT ? now - prevT : 0;
+    prevT = now;
+    if (dt > 0 && dt < 250) {
+      // images par seconde (moyenne mobile) ; si elles tombent sous 45 pendant 2 s, on allège le détail
+      fpsEma = fpsEma * 0.9 + (1000 / dt) * 0.1;
+      lowT = fpsEma < 45 ? lowT + dt : 0;
+      if (lowT > 2000 && S.detail !== 'eco') {
+        S.detail = S.detail === 'fin' ? 'normale' : 'eco';
+        lowT = 0; fpsEma = 60;
+        layout();
+      }
+    }
+    if (S.rain && now >= nextRain) {
+      nextRain = now + rnd(250, 900);
+      const x = rnd(0, W), y = rnd(0, H), A = rnd(0.5, 1);
+      addDrop(x, y, A, 2.2);
+      splash(x, y, false, now);
+      playDrop(x, A, 'rain');
+    }
+    step(now);
+    render();
+    draw(now);
+    if (showFps) fpsEl.textContent = Math.round(fpsEma) + ' images/s · ' + GW + '×' + GH + ' cellules';
+    raf = (energy > 0.002 || rings.length || drops.length || now < calmUntil || S.rain) ? requestAnimationFrame(frame) : 0;
+  }
+  function wake() {
+    if (!raf && !paused && !document.hidden) raf = requestAnimationFrame(frame);
+  }
+
+  /* ---------- son (WebAudio, créé au premier geste) ---------- */
+  const fpsEl = $('fps'), liveEl = $('live'), hintEl = $('hint'), toastEl = $('toast'), countTxt = $('countTxt');
+  let ac = null, master = null, echoIn = null, noiseBuf = null;
+  let trailTimes = [], sayT = 0, toastT = 0;
+  function ensureAudio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try { ac = new AC(); } catch (_) { ac = null; return; }
+      const comp = ac.createDynamicsCompressor();
+      master = ac.createGain();
+      master.gain.value = S.volume;
+      master.connect(comp);
+      comp.connect(ac.destination);
+      // écho : retard 190 ms, rétroaction 0,3, passe-bas 2 kHz
+      echoIn = ac.createGain();
+      const dl = ac.createDelay(1);
+      dl.delayTime.value = 0.19;
+      const fb = ac.createGain();
+      fb.gain.value = 0.3;
+      const lp = ac.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 2000;
+      echoIn.connect(dl);
+      dl.connect(lp);
+      lp.connect(fb);
+      fb.connect(dl);
+      lp.connect(master);
+      const nl = Math.floor(ac.sampleRate * 0.5);
+      noiseBuf = ac.createBuffer(1, nl, ac.sampleRate);
+      const nd = noiseBuf.getChannelData(0);
+      for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
+    }
+    syncAudio();
+  }
+  function syncAudio() {
+    if (!ac) return;
+    try {
+      const want = S.sound && !paused && !document.hidden;
+      if (want && ac.state !== 'running') ac.resume().catch(() => {});
+      else if (!want && ac.state === 'running') ac.suspend().catch(() => {});
+    } catch (_) {}
+  }
+  function voice(freq, t0, amp, dur, pan, echo) {
+    const o = ac.createOscillator(), o2 = ac.createOscillator();
+    o.frequency.value = freq;
+    o2.frequency.value = freq * 2;
+    const g = ac.createGain(), g2 = ac.createGain();
+    g2.gain.value = 0.25;
+    o.connect(g);
+    o2.connect(g2);
+    g2.connect(g);
+    const pn = ac.createStereoPanner();
+    pn.pan.value = clamp(pan, -1, 1) * 0.7;
+    g.connect(pn);
+    pn.connect(master);
+    const es = ac.createGain();
+    es.gain.value = echo;
+    pn.connect(es);
+    es.connect(echoIn);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(amp, t0 + 0.003);
+    g.gain.exponentialRampToValueAtTime(amp * 0.001, t0 + dur);
+    o.start(t0); o2.start(t0);
+    o.stop(t0 + dur + 0.05); o2.stop(t0 + dur + 0.05);
+  }
+  function plop(pan, amp, t0) {
+    const src = ac.createBufferSource(), lp = ac.createBiquadFilter(), g = ac.createGain(), pn = ac.createStereoPanner();
+    src.buffer = noiseBuf;
+    lp.type = 'lowpass';
+    lp.frequency.value = 700;
+    g.gain.setValueAtTime(amp, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
+    pn.pan.value = clamp(pan, -1, 1) * 0.7;
+    src.connect(lp); lp.connect(g); g.connect(pn); pn.connect(master);
+    src.start(t0, Math.random() * 0.3);
+    src.stop(t0 + 0.05);
+  }
+  // kind : 'drop' | 'trail' (plus aiguë, 3x plus faible) | 'rain' (volume 0,6) | 'galet' (grave + sub 60 Hz)
+  function playDrop(x, A, kind) {
+    if (!ac || !S.sound || paused) return;
+    const t0 = ac.currentTime + 0.01;
+    const pos = clamp(x / W, 0, 1), pan = pos * 2 - 1;
+    if (kind === 'galet') {
+      voice(130.81, t0, 0.2, 1.2, pan * 0.3, 0.2);
+      const sub = ac.createOscillator(), sg = ac.createGain();
+      sub.frequency.value = 60;
+      sg.gain.setValueAtTime(0.0001, t0);
+      sg.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
+      sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
+      sub.connect(sg); sg.connect(master);
+      sub.start(t0); sub.stop(t0 + 0.55);
+      return;
+    }
+    const scale = SCALES[S.scale][1];
+    const idx = Math.min(9, Math.floor(pos * 10));
+    let f = 261.63 * Math.pow(2, scale[idx] / 12);
+    let amp = 0.18 * (0.5 + 0.5 * A);
+    if (kind === 'trail') { f *= 2; amp /= 3; }
+    if (kind === 'rain') amp *= 0.6;
+    voice(f, t0, amp, 0.9, pan, 0.35);
+    plop(pan, amp * 0.35, t0);
+  }
+
+  /* ---------- gouttes, galets, traînées ---------- */
+  const LONG = 450, KLONG = 500;
+  const ptrs = new Map();
+  let count = 0, spaceOn = false, spaceDone = false, spaceT = 0, spaceTimer = 0;
+  function countUp() {
+    count++;
+    countTxt.textContent = count + (count > 1 ? ' gouttes' : ' goutte');
+  }
+  function say(t) {
+    const n = performance.now();
+    if (n - sayT < 1500) return;
+    sayT = n;
+    liveEl.textContent = t;
+  }
+  function hideHint() { hintEl.classList.add('gone'); }
+  function toast(t) {
+    toastEl.textContent = t;
+    toastEl.classList.remove('gone');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => toastEl.classList.add('gone'), 1400);
+  }
+  function splash(x, y, big, now) {
+    if (reduced) return;
+    rings.push({ x, y, t0: now, life: big ? 800 : 500, r0: big ? 12 : 8, r1: big ? 110 : 60 });
+    if (rings.length > 24) rings.shift();
+    const n = big ? 12 : 5 + Math.floor(Math.random() * 4);
+    for (let k = 0; k < n; k++) {
+      const a = -Math.PI * (0.1 + 0.8 * Math.random());
+      const sp = rnd(120, big ? 300 : 230);
+      drops.push({ x, y, vx: Math.cos(a) * sp * 0.5, vy: Math.sin(a) * sp, t0: now, life: 0.35 });
+    }
+    if (drops.length > 200) drops.splice(0, drops.length - 200);
+  }
+  function dropAt(x, y) {
+    const now = performance.now();
+    addDrop(x, y, 1.0, 2.2);
+    splash(x, y, false, now);
+    playDrop(x, 1, 'drop');
+    countUp(); hideHint(); say('Goutte.');
+    wake();
+  }
+  function galetAt(x, y) {
+    const now = performance.now();
+    addDrop(x, y, 3.2, 4.5);
+    splash(x, y, true, now);
+    playDrop(x, 1, 'galet');
+    countUp(); hideHint(); sayT = 0; say('Galet.');
+    wake();
+  }
+  function trail(x, y) {
+    addDrop(x, y, 0.35, 1.8);
+    const n = performance.now();
+    trailTimes = trailTimes.filter(t => n - t < 1000);
+    if (trailTimes.length < 12) { trailTimes.push(n); playDrop(x, 1, 'trail'); }
+    wake();
+  }
+  function hideCursor() { if (kShow) { kShow = false; wake(); } }
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button > 0 || paused) return;
+    ensureAudio();
+    hideCursor();
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    const p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), drag: false, done: false, acc: 0, timer: 0 };
+    p.timer = setTimeout(() => {
+      if (ptrs.get(e.pointerId) !== p || p.drag) return;
+      p.done = true;
+      galetAt(p.x, p.y);
+    }, LONG);
+    ptrs.set(e.pointerId, p);
+  });
+  canvas.addEventListener('pointermove', e => {
+    const p = ptrs.get(e.pointerId);
+    if (!p) return;
+    const nx = e.clientX, ny = e.clientY;
+    if (!p.drag && Math.hypot(nx - p.x0, ny - p.y0) > 6) { p.drag = true; clearTimeout(p.timer); p.acc = 18; }
+    if (p.drag) {
+      // une goutte mini tous les 18 CSS px parcourus
+      const dx = nx - p.x, dy = ny - p.y, seg = Math.hypot(dx, dy);
+      if (seg > 0) {
+        let s = 18 - p.acc;
+        while (s <= seg) { const f = s / seg; trail(p.x + dx * f, p.y + dy * f); s += 18; }
+        p.acc = seg - (s - 18);
+      }
+    }
+    p.x = nx; p.y = ny;
+  });
+  function endPtr(e) {
+    const p = ptrs.get(e.pointerId);
+    if (!p) return;
+    clearTimeout(p.timer);
+    ptrs.delete(e.pointerId);
+    if (!p.drag && !p.done && performance.now() - p.t0 < LONG) dropAt(p.x0, p.y0);
+  }
+  canvas.addEventListener('pointerup', endPtr);
+  canvas.addEventListener('pointercancel', endPtr);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ---------- clavier ---------- */
+  canvas.addEventListener('keydown', e => {
+    const big = e.shiftKey ? 80 : 20;
+    const moves = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (moves[e.key]) {
+      kx = clamp(kx + moves[e.key][0] * big, 0, W);
+      ky = clamp(ky + moves[e.key][1] * big, 0, H);
+      kShow = true;
+      wake();
+    } else if (e.key === 'Enter') {
+      dropAt(kx, ky);
+    } else if (e.key === ' ') {
+      if (!e.repeat) {
+        spaceOn = true; spaceDone = false; spaceT = performance.now();
+        clearTimeout(spaceTimer);
+        spaceTimer = setTimeout(() => { spaceDone = true; galetAt(kx, ky); }, KLONG);
+      }
+    } else return;
+    e.preventDefault();
+  });
+  canvas.addEventListener('keyup', e => {
+    if (e.key !== ' ' || !spaceOn) return;
+    spaceOn = false;
+    clearTimeout(spaceTimer);
+    if (!spaceDone) dropAt(kx, ky);
+  });
+  canvas.addEventListener('blur', () => { spaceOn = false; clearTimeout(spaceTimer); hideCursor(); });
+  document.addEventListener('keydown', e => {
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT') { if (e.key === 'Escape') setDrawer(false); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === 'escape') setDrawer(false);
+    else if (k === 'r') toggleRain();
+    else if (k === 'c') calm();
+    else if (k === 'p') togglePause();
+    else if (k === 'm') toggleSound();
+    else if (k === 'h') toggleUI();
+    else if (k === 'i') toggleFps();
+    else if (k === 'f') fullscreen();
+    else return;
+    e.preventDefault();
+  });
+
+  /* ---------- actions ---------- */
+  function toggleRain() {
+    S.rain = !S.rain; save();
+    nextRain = performance.now() + 200;
+    syncIcons(); syncAll(); wake();
+    toast(S.rain ? 'Pluie' : 'Pluie arrêtée');
+  }
+  function calm() {
+    calmUntil = performance.now() + 1500;
+    wake();
+    toast('L’eau s’apaise.');
+  }
+  function togglePause() {
+    paused = !paused;
+    syncIcons(); syncAudio();
+    if (paused) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      toast('Pause');
+    } else {
+      prevT = 0;
+      toast('Reprise');
+      wake();
+    }
+  }
+  function toggleSound() {
+    S.sound = !S.sound; save();
+    if (S.sound) ensureAudio();
+    syncAudio(); syncIcons(); syncAll();
+    toast(S.sound ? 'Son activé' : 'Son coupé');
+  }
+  function toggleUI() {
+    document.body.classList.toggle('ui-hidden');
+    if (document.body.classList.contains('ui-hidden')) setDrawer(false);
+  }
+  function toggleFps() {
+    showFps = !showFps;
+    fpsEl.hidden = !showFps;
+  }
+  function fullscreen() {
+    try {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    } catch (_) {}
+  }
+  function clearWater() {
+    h.fill(0); v.fill(0);
+    rings.length = 0; drops.length = 0;
+    wake();
+    toast('Eau vidée');
+  }
+  function set(k, val) { S[k] = val; save(); applySetting(k); }
+  function applySetting(k) {
+    if (k === 'palette') PAL = PALETTES[S.palette][1];
+    else if (k === 'walls' || k === 'calm') buildDamp();
+    else if (k === 'detail') layout();
+    else if (k === 'volume') { if (master) master.gain.setTargetAtTime(S.volume, ac.currentTime, 0.02); }
+    else if (k === 'rain') nextRain = performance.now() + 200;
+    else if (k === 'sound') { if (S.sound) ensureAudio(); syncAudio(); }
+    syncIcons(); syncAll(); wake();
+  }
+  function resetSettings() {
+    Object.assign(S, DEF);
+    save();
+    PAL = PALETTES[S.palette][1];
+    layout();
+    if (master) master.gain.setTargetAtTime(S.volume, ac.currentTime, 0.02);
+    syncIcons(); syncAll(); wake();
+    toast('Réglages remis par défaut');
+  }
+
+  /* ---------- interface ---------- */
+  const ICON = {
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fill" x="6" y="5" width="4" height="14" rx="1"/><rect class="fill" x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M8 5l11 7-11 7z"/></svg>',
+    on: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>',
+    off: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
+    set: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M4 12h16"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  };
+  const btnPause = $('btnPause'), btnSound = $('btnSound'), btnSet = $('btnSet'), btnClose = $('btnClose');
+  const btnShow = $('btnShow'), btnRain = $('btnRain'), btnCalm = $('btnCalm');
+  const drawer = $('drawer');
+  btnSet.innerHTML = ICON.set;
+  btnClose.innerHTML = ICON.close;
+  btnShow.innerHTML = ICON.eye;
+  function syncIcons() {
+    btnPause.innerHTML = paused ? ICON.play : ICON.pause;
+    btnPause.setAttribute('aria-label', paused ? 'Reprendre' : 'Mettre en pause');
+    btnSound.innerHTML = S.sound ? ICON.on : ICON.off;
+    btnSound.setAttribute('aria-label', S.sound ? 'Couper le son' : 'Activer le son');
+    btnRain.setAttribute('aria-pressed', String(S.rain));
+  }
+  function setDrawer(open) {
+    drawer.classList.toggle('open', open);
+    btnSet.setAttribute('aria-expanded', String(open));
+    if (open) btnClose.focus(); else if (drawer.contains(document.activeElement)) btnSet.focus();
+  }
+  btnSet.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+  btnClose.addEventListener('click', () => setDrawer(false));
+  btnShow.addEventListener('click', toggleUI);
+  btnPause.addEventListener('click', togglePause);
+  btnSound.addEventListener('click', () => { ensureAudio(); toggleSound(); });
+  btnRain.addEventListener('click', () => { ensureAudio(); toggleRain(); });
+  btnCalm.addEventListener('click', () => { ensureAudio(); calm(); });
+
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+    for (const c of kids) if (c != null) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    return n;
+  }
+  const opts = obj => Object.keys(obj).map(k => [k, Array.isArray(obj[k]) ? obj[k][0] : obj[k]]);
+  const pc = v => Math.round(v * 100) + ' %';
+  const UI = [
+    ['Eau', true, [
+      { t: 'sel', k: 'palette', l: 'Couleurs de l’eau', o: opts(PALETTES) },
+      { t: 'sel', k: 'walls', l: 'Murs', o: opts(WALLS) },
+    ]],
+    ['Ondes', true, [
+      { t: 'sel', k: 'calm', l: 'Calme (durée des ondes)', o: opts(CALMS) },
+      { t: 'range', k: 'speed', l: 'Vitesse des ondes', min: 0.12, max: 0.24, step: 0.01, f: v => v.toFixed(2).replace('.', ',') },
+      { t: 'note', x: 'Au-delà de 0,24 la surface devient instable : la vitesse est plafonnée.' },
+    ]],
+    ['Affichage', false, [
+      { t: 'sel', k: 'detail', l: 'Détails', o: opts(DETAILS) },
+      { t: 'note', x: 'L’image s’allège toute seule si les images par seconde chutent.' },
+    ]],
+    ['Pluie et son', false, [
+      { t: 'tog', k: 'rain', l: 'Pluie' },
+      { t: 'tog', k: 'sound', l: 'Son activé' },
+      { t: 'range', k: 'volume', l: 'Volume', min: 0, max: 1, step: 0.01, f: pc },
+      { t: 'sel', k: 'scale', l: 'Gamme', o: opts(SCALES) },
+    ]],
+    ['Actions', true, [
+      { t: 'btns', b: [['Calmer', calm], ['Vider l’eau', clearWater], ['Réinitialiser', resetSettings]] },
+    ]],
+  ];
+  const syncers = [];
+  const panel = $('panel');
+  UI.forEach(([title, open, items]) => {
+    const body = el('div', { class: 'secbody' });
+    items.forEach(it => {
+      if (it.t === 'range') {
+        const id = 'ctl-' + it.k;
+        const out = el('output', { for: id });
+        const inp = el('input', { type: 'range', id, min: it.min, max: it.max, step: it.step });
+        inp.addEventListener('input', () => { set(it.k, parseFloat(inp.value)); out.textContent = it.f(S[it.k]); });
+        body.appendChild(el('div', { class: 'row' }, el('label', { for: id }, it.l), out, inp));
+        syncers.push(() => { inp.value = S[it.k]; out.textContent = it.f(S[it.k]); });
+      } else if (it.t === 'sel') {
+        const id = 'ctl-' + it.k;
+        const sel = el('select', { id });
+        it.o.forEach(([val, name]) => sel.appendChild(el('option', { value: val }, name)));
+        sel.addEventListener('change', () => set(it.k, sel.value));
+        body.appendChild(el('div', { class: 'row' }, el('label', { for: id }, it.l), sel));
+        syncers.push(() => { sel.value = S[it.k]; });
+      } else if (it.t === 'tog') {
+        const id = 'ctl-' + it.k;
+        const inp = el('input', { type: 'checkbox', id });
+        inp.addEventListener('change', () => set(it.k, inp.checked));
+        body.appendChild(el('label', { class: 'row tog', for: id }, el('span', null, it.l), inp));
+        syncers.push(() => { inp.checked = !!S[it.k]; });
+      } else if (it.t === 'btns') {
+        const box = el('div', { class: 'btns' });
+        it.b.forEach(([label, fn]) => {
+          const b = el('button', { class: 'btn', type: 'button' }, label);
+          b.addEventListener('click', () => { ensureAudio(); fn(); });
+          box.appendChild(b);
+        });
+        body.appendChild(box);
+      } else if (it.t === 'note') {
+        body.appendChild(el('p', { class: 'note' }, it.x));
+      }
+    });
+    const det = el('details', null, el('summary', null, title), body);
+    if (open) det.setAttribute('open', '');
+    panel.appendChild(det);
+  });
+  function syncAll() { syncers.forEach(f => f()); }
+
+  /* ---------- cycle de vie ---------- */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      ptrs.clear();
+      syncAudio();
+    } else {
+      prevT = 0;
+      syncAudio();
+      wake();
+    }
+  });
+  window.addEventListener('resize', () => {
+    // les barres d'adresse mobiles déclenchent des redimensionnements mineurs : on garde l'eau
+    if (innerWidth === W && Math.abs(innerHeight - H) <= 120) return;
+    layout();
+    kx = clamp(kx, 0, W); ky = clamp(ky, 0, H);
+    wake();
+  });
+
+  /* ---------- démarrage ---------- */
+  layout();
+  kx = W / 2; ky = H / 2;
+  PAL = PALETTES[S.palette][1];
+  syncIcons(); syncAll();
+  setTimeout(hideHint, 6000);
+  // trois gouttes douces au centre pour montrer l'effet (sans son, sans compter)
+  [300, 1300, 2300].forEach(t => setTimeout(() => {
+    const now = performance.now();
+    addDrop(W / 2, H / 2, 0.6, 2.2);
+    splash(W / 2, H / 2, false, now);
+    wake();
+  }, t));
+  wake();
+})();
+</script>
+</body>
+</html>
