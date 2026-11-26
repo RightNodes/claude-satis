@@ -1,7 +1,7 @@
 # satis — galerie de jeux
 
 - `index.html` : galerie
-- `jeux/` : un fichier autonome par jeu — billes, tranche, bulles, sable, mandala, dominos, limaille, engrenages, gouttes
+- `jeux/` : un fichier autonome par jeu — billes, tranche, bulles, sable, mandala, dominos
 
 Ouvrir `index.html` dans un navigateur suffit, aucun build.
 
