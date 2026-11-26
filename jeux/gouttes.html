@@ -437,7 +437,7 @@
 
   /* ---------- rendering ---------- */
   function render() {
-    const d = img.data, K = 3.2;
+    const d = img.data, K = 6.5;
     for (let y = 0; y < GH; y++) {
       const yu = y > 0 ? -GW : 0, yd = y < GH - 1 ? GW : 0;
       const sk = 0.12 * (1 - 0.7 * y / GH);
@@ -449,14 +449,14 @@
         const inv = 1 / Math.sqrt(gx * gx + gy * gy + 1);
         const nx = -gx * inv, ny = -gy * inv, nz = inv;
         const diff = Math.max(0, nx * Lx + ny * Ly + nz * Lz);
-        const sp = Math.pow(Math.max(0, nx * Hx + ny * Hy + nz * Hz), 48);
+        const sp = Math.pow(Math.max(0, nx * Hx + ny * Hy + nz * Hz), 36);
         const t = clamp(0.5 + 0.18 * hi, 0, 1);
         const lap = h[xl] + h[xr] + h[i + yu] + h[i + yd] - 4 * hi;
         const gl = lap < 0 ? Math.min(40, -lap * 80) : 0;
         const bf = 0.55 + 0.75 * diff, o = i * 4;
-        d[o] = (PAL.deep[0] + (PAL.surf[0] - PAL.deep[0]) * t) * bf + PAL.spec[0] * 0.9 * sp + PAL.sky[0] * sk;
-        d[o + 1] = (PAL.deep[1] + (PAL.surf[1] - PAL.deep[1]) * t) * bf + PAL.spec[1] * 0.9 * sp + PAL.sky[1] * sk + gl;
-        d[o + 2] = (PAL.deep[2] + (PAL.surf[2] - PAL.deep[2]) * t) * bf + PAL.spec[2] * 0.9 * sp + PAL.sky[2] * sk + gl;
+        d[o] = (PAL.deep[0] + (PAL.surf[0] - PAL.deep[0]) * t) * bf + PAL.spec[0] * 1.5 * sp + PAL.sky[0] * sk;
+        d[o + 1] = (PAL.deep[1] + (PAL.surf[1] - PAL.deep[1]) * t) * bf + PAL.spec[1] * 1.5 * sp + PAL.sky[1] * sk + gl;
+        d[o + 2] = (PAL.deep[2] + (PAL.surf[2] - PAL.deep[2]) * t) * bf + PAL.spec[2] * 1.5 * sp + PAL.sky[2] * sk + gl;
         d[o + 3] = 255;
       }
     }
