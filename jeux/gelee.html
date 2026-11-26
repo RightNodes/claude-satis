@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Gelée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  /* Layout idea: a full-screen pool of soft jelly blobs. Each blob is a ring of 28 points
+     held together by springs, shape matching and an inner pressure. Controls live in a drawer
+     and a row of tools, like in tranche.html and billes.html. */
+  :root {
+    --bg: #0f3a46;
+    --peg: #3a7686;
+    --ink: #f4efe4;
+    --ink-2: #a9c9d0;
+    --accent: #ffd166;
+    --panel: color-mix(in srgb, var(--ink) 8%, var(--bg));
+    --line: color-mix(in srgb, var(--ink) 24%, transparent);
+    --soft: color-mix(in srgb, var(--ink) 9%, transparent);
+    --font: "Gabarito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: pointer;
+  }
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 18px 20px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: min(calc(100vw - 180px), 560px);
+    z-index: 5;
+  }
+  .back {
+    align-self: flex-start;
+    margin: 0 0 10px;
+    font: 500 13px/1 var(--font);
+    color: var(--ink-2);
+    text-decoration: none;
+    pointer-events: auto;
+    padding: 6px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .back:hover { color: var(--ink); }
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 6vw, 46px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .count {
+    margin: 6px 0 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .hint {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent);
+    transition: opacity 0.8s ease;
+  }
+  .hint.gone { opacity: 0; }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    pointer-events: auto;
+    max-width: 440px;
+  }
+  .tools button, .btn {
+    font: 500 14px/1 var(--font);
+    color: var(--ink);
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 13px;
+    cursor: pointer;
+  }
+  .tools button { backdrop-filter: blur(4px); background: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .tools button:hover, .btn:hover { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .bar {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+    z-index: 6;
+  }
+  .iconbtn {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+  .iconbtn:hover { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .iconbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .iconbtn svg .fill { fill: currentColor; stroke: none; }
+  button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .ghost {
+    display: none;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 30;
+    opacity: 0.25;
+  }
+  .ghost:hover, .ghost:focus-visible { opacity: 1; }
+  body.ui-hidden header, body.ui-hidden .bar, body.ui-hidden .drawer { display: none; }
+  body.ui-hidden .ghost { display: grid; }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(380px, 100vw);
+    box-sizing: border-box;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 16px 18px 32px;
+    z-index: 20;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+  .drawer.open { visibility: visible; transform: none; transition: transform 0.25s ease; }
+  .dhead { display: flex; align-items: center; justify-content: space-between; }
+  .dhead h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  summary { cursor: pointer; font-size: 16px; font-weight: 800; color: var(--accent); padding: 4px 0; }
+  .secbody { margin-top: 12px; display: flex; flex-direction: column; gap: 13px; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .row output { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .row input[type="range"] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--accent); }
+  .row select {
+    grid-column: 1 / -1;
+    font: 500 14px var(--font);
+    color: var(--ink);
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .row select option { color: #111; }
+  .row.tog { cursor: pointer; }
+  .row.tog input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .note { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+  .keys { margin: 22px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer, .drawer.open, .hint { transition: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="Plateau de gelées. Attrape une gelée et lance-la, ou touche le fond pour en ajouter une."></canvas>
+<header>
+  <a class="back" href="../">← Galerie</a>
+  <h1>gelée</h1>
+  <p class="count" id="count">0 gelée</p>
+  <p class="hint" id="hint">Attrape une gelée et lance-la. Touche le fond pour en ajouter.</p>
+  <div class="tools" id="tools" role="group" aria-label="Outils"></div>
+</header>
+<p class="sr" id="live" aria-live="polite"></p>
+<div class="bar">
+  <button class="iconbtn" id="btnPause" type="button" aria-label="Mettre en pause" title="Pause (P)"></button>
+  <button class="iconbtn" id="btnSound" type="button" aria-label="Couper le son" title="Son (M)"></button>
+  <button class="iconbtn" id="btnSet" type="button" aria-label="Ouvrir les réglages" aria-expanded="false" aria-controls="drawer" title="Réglages"></button>
+</div>
+<button class="iconbtn ghost" id="btnShow" type="button" aria-label="Afficher l'interface" title="Afficher l'interface (H)"></button>
+<aside class="drawer" id="drawer" aria-label="Réglages">
+  <div class="dhead">
+    <h2>Réglages</h2>
+    <button class="iconbtn" id="btnClose" type="button" aria-label="Fermer les réglages"></button>
+  </div>
+  <details open>
+    <summary>Physique</summary>
+    <div class="secbody">
+      <div class="row"><label for="s-stiff">Raideur</label></div>
+      <select id="s-stiff">
+        <option value="mou">Mou</option>
+        <option value="moyen">Moyen</option>
+        <option value="ferme">Ferme</option>
+      </select>
+      <div class="row"><label for="s-grav">Gravité</label></div>
+      <select id="s-grav">
+        <option value="normale">Normale</option>
+        <option value="lune">Lune</option>
+        <option value="zero">Zéro-g</option>
+        <option value="inversee">Inversée</option>
+      </select>
+      <div class="row"><label for="s-dir">Direction</label></div>
+      <select id="s-dir">
+        <option value="bas">Vers le bas</option>
+        <option value="haut">Vers le haut</option>
+        <option value="gauche">Vers la gauche</option>
+        <option value="droite">Vers la droite</option>
+      </select>
+      <div class="row"><label for="s-bounce">Rebond</label><output id="o-bounce"></output>
+        <input type="range" id="s-bounce" min="0.1" max="0.6" step="0.01"></div>
+    </div>
+  </details>
+  <details open>
+    <summary>Gelées</summary>
+    <div class="secbody">
+      <div class="row"><label for="s-size">Taille</label></div>
+      <select id="s-size">
+        <option value="petit">Petit</option>
+        <option value="moyen">Moyen</option>
+        <option value="gros">Gros</option>
+        <option value="melange">Mélange</option>
+      </select>
+      <div class="row"><label for="s-pal">Palette</label></div>
+      <select id="s-pal">
+        <option value="bonbon">Bonbon</option>
+        <option value="pastel">Pastel</option>
+        <option value="neon">Néon</option>
+        <option value="glacier">Glacier</option>
+        <option value="mono">Monochrome</option>
+      </select>
+    </div>
+  </details>
+  <details>
+    <summary>Son</summary>
+    <div class="secbody">
+      <label class="row tog" for="s-sound"><span>Son activé</span><input type="checkbox" id="s-sound"></label>
+      <div class="row"><label for="s-vol">Volume</label><output id="o-vol"></output>
+        <input type="range" id="s-vol" min="0" max="1" step="0.01"></div>
+    </div>
+  </details>
+  <details>
+    <summary>Autre</summary>
+    <div class="secbody">
+      <div class="btns"><button class="btn" id="btnReset" type="button">Réinitialiser les réglages</button></div>
+    </div>
+  </details>
+  <p class="keys">Raccourcis : Tab choisit une gelée, flèches la poussent (Maj : plus fort), Espace la fait gicler, N nouvelle gelée, G gravité, S secouer, Suppr supprime la gelée choisie, P pause, M son, H cache l'interface, F plein écran, Échap ferme ce panneau.</p>
+</aside>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('c');
+  const ctx = canvas.getContext('2d');
+  const live = $('live'), countEl = $('count'), hintEl = $('hint');
+  const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reduced = reducedMQ.matches;
+
+  /* ---------- constants ---------- */
+  const TAU = Math.PI * 2;
+  const N = 28;                              // points du bord
+  const SIN_PI_N = Math.sin(Math.PI / N);
+  const SIN_TAU_N = Math.sin(TAU / N);
+  const EDGE_K = 900;                        // ressort d'arête (accélération par unité de masse)
+  const PRESS_K = 5200;                      // pression interne (volume)
+  const AIR_D = 1.8;                         // amortissement de l'air
+  const INNER_D = 6;                         // amortissement interne relatif au centre
+  const BLOB_E = 0.25;                       // restitution blob contre blob
+  const WALL_FRIC = 0.06;
+  const GRAB_K = 90;
+  const CONTACT = 11;                        // distance de contact entre points (× s)
+  const MAX_BLOBS = 10;
+  const SUBSTEPS = 4;
+  const CAP_GRAB = 2600, CAP_RELEASE = 2000, CAP_ANY = 4000;
+  const BOING_MIN = 120;
+  const POP_T = 0.35;
+  const NOTES = [130.81, 146.83, 164.81, 196.0, 220.0, 261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const wrap = a => a - TAU * Math.round(a / TAU);
+
+  const PALETTES = {
+    bonbon: ['Bonbon', ['#ff6b81', '#ffd166', '#7bdff2', '#b8f2a0', '#c9a7ff', '#ff9f68']],
+    pastel: ['Pastel', ['#ffc2d1', '#fff1a8', '#c4f1f9', '#d8f5c2', '#e0ccff', '#ffd9b3']],
+    neon: ['Néon', ['#ff3ea5', '#39ff88', '#2de2ff', '#ffe83d', '#b26bff', '#ff7a1a']],
+    glacier: ['Glacier', ['#9fe3ff', '#5cc8ff', '#c9f1ff', '#7fb2ff', '#e6fbff', '#3ea8e0']],
+    mono: ['Monochrome', ['#ff7d9c', '#ff9fb6', '#ffc0cf', '#e8557a', '#ffd6e0', '#c94466']],
+  };
+  const SIZES = { petit: [46, 56], moyen: [60, 72], gros: [76, 86], melange: [46, 86] };
+  // Raideurs de mise en forme : valeurs de la spec (70 / 150 / 320) multipliées par 4.
+  // Sans ce facteur, la gravité (1500 px/s²) écrase la gelée au repos : rapport largeur/hauteur 1,3 à 1,9.
+  // Avec ×4 : 1,07 à 1,21, et l'apesanteur reste parfaitement ronde.
+  const STIFF = { mou: ['Mou', 280], moyen: ['Moyen', 600], ferme: ['Ferme', 1280] };
+  const GRAV = { normale: ['Normale', 1500], lune: ['Lune', 380], zero: ['Zéro-g', 0], inversee: ['Inversée', -1500] };
+  const GORDER = ['normale', 'lune', 'zero', 'inversee'];
+  const DIRS = { bas: [0, 1, 'vers le bas'], haut: [0, -1, 'vers le haut'], gauche: [-1, 0, 'vers la gauche'], droite: [1, 0, 'vers la droite'] };
+
+  /* ---------- settings ---------- */
+  const KEY = 'gelee-reglages-v1';
+  const DEF = { stiff: 'moyen', grav: 'normale', dir: 'bas', size: 'melange', pal: 'bonbon', bounce: 0.32, soundOn: true, volume: 0.5 };
+  let S = Object.assign({}, DEF);
+  try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  if (!STIFF[S.stiff]) S.stiff = DEF.stiff;
+  if (!GRAV[S.grav]) S.grav = DEF.grav;
+  if (!DIRS[S.dir]) S.dir = DEF.dir;
+  if (!SIZES[S.size]) S.size = DEF.size;
+  if (!PALETTES[S.pal]) S.pal = DEF.pal;
+  S.bounce = clamp(+S.bounce || DEF.bounce, 0.1, 0.6);
+  S.volume = clamp(+S.volume || 0, 0, 1);
+  S.soundOn = !!S.soundOn;
+  const saveS = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
+
+  /* ---------- state ---------- */
+  let W = 0, H = 0, dpr = 1, s = 1;
+  let blobs = [];
+  let particles = [];
+  let pairMap = new Map();
+  let blobIds = 0, colorIdx = 0, selId = 0, ringOn = false, paused = false;
+  let running = false, last = 0, quiet = 0;
+  const pointers = new Map();
+  const AX = new Float64Array(N), AY = new Float64Array(N);
+  const bgCv = document.createElement('canvas');
+
+  function announce(msg) { live.textContent = ''; live.textContent = msg; }
+  function updateCount() {
+    const n = blobs.length;
+    let t = n + ' gelée' + (n > 1 ? 's' : '') + ' · gravité ' + GRAV[S.grav][0].toLowerCase();
+    if (S.dir !== 'bas') t += ' · ' + DIRS[S.dir][2];
+    countEl.textContent = t;
+  }
+
+  /* ---------- colours ---------- */
+  function toneOf(hex) {
+    const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, L = (mx + mn) / 2;
+    let h = 0, sa = 0;
+    if (d > 1e-6) {
+      sa = d / (1 - Math.abs(2 * L - 1));
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    const hh = Math.round(h), sp = (sa * 100).toFixed(0), l = L * 100;
+    const hs = (lum, a) => a === undefined
+      ? 'hsl(' + hh + ' ' + sp + '% ' + clamp(lum, 0, 100).toFixed(0) + '%)'
+      : 'hsla(' + hh + ' ' + sp + '% ' + clamp(lum, 0, 100).toFixed(0) + '% / ' + a + ')';
+    return { light: hs(l + 14), mid: hs(l), edge: hs(l - 6), rim: hs(l - 9, 0.35), sub: hs(l + 26, 0.28), hex };
+  }
+  const nextHex = () => PALETTES[S.pal][1][colorIdx++ % 6];
+
+  /* ---------- blobs ---------- */
+  function makeBlob(x0, y0, R, hex, popping) {
+    const x = new Float64Array(N), y = new Float64Array(N);
+    const vx = new Float64Array(N), vy = new Float64Array(N);
+    const r0 = popping ? R * 0.2 : R;
+    for (let i = 0; i < N; i++) {
+      const t = TAU * i / N;
+      x[i] = x0 + r0 * Math.cos(t);
+      y[i] = y0 + r0 * Math.sin(t);
+    }
+    return {
+      id: ++blobIds, R, x, y, vx, vy, phi: 0, tones: toneOf(hex),
+      popT: popping ? 0 : -1, sq: 0, Rr: r0, cx: x0, cy: y0, maxY: y0,
+      grab: null, impact: 0, wallImp: 0,
+    };
+  }
+  function popScale(t) {
+    if (t < 0) return 1;
+    const u = clamp(t / POP_T, 0, 1);
+    if (u < 0.6) { const e = u / 0.6; return 0.2 + 0.92 * (1 - (1 - e) * (1 - e)); }
+    return 1.12 - 0.12 * ((u - 0.6) / 0.4);
+  }
+  function centroid(b) {
+    let sx = 0, sy = 0;
+    for (let i = 0; i < N; i++) { sx += b.x[i]; sy += b.y[i]; }
+    b.cx = sx / N; b.cy = sy / N;
+  }
+  function noteFor(R) {
+    const r = R / s;
+    const t = clamp((86 - r) / 40, 0, 1);
+    return NOTES[Math.round(t * (NOTES.length - 1))];
+  }
+  function spawnAt(x, y, pop) {
+    if (blobs.length >= MAX_BLOBS) {
+      const old = blobs.shift();
+      if (old.grab) old.grab = null;
+      burst(old);
+      if (old.id === selId) selId = 0;
+      popSound(false);
+    }
+    const [lo, hi] = SIZES[S.size];
+    const R = (lo + Math.random() * (hi - lo)) * s;
+    const popping = !reduced && pop;
+    const px = clamp(x, R, Math.max(R, W - R)), py = clamp(y, R, Math.max(R, H - R));
+    const b = makeBlob(px, py, R, nextHex(), popping);
+    b.cx = px; b.cy = py;
+    blobs.push(b);
+    if (pop) popSound(true);
+    updateCount();
+    wake();
+    return b;
+  }
+  function removeBlob(b, animate) {
+    blobs = blobs.filter(o => o !== b);
+    if (b.id === selId) selId = 0;
+    if (animate) { burst(b); popSound(false); }
+    updateCount();
+    wake();
+  }
+  function burst(b) {
+    if (reduced) return;
+    for (let i = 0; i < 9; i++) {
+      const a = Math.random() * TAU;
+      const sp = (260 + Math.random() * 320) * s;
+      particles.push({
+        x: b.cx + Math.cos(a) * b.Rr * 0.5, y: b.cy + Math.sin(a) * b.Rr * 0.5,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        r: (4 + Math.random() * 4) * s, t: 0, life: 0.4, col: b.tones.mid,
+      });
+    }
+  }
+  function updateParticles(dt) {
+    for (const p of particles) {
+      p.t += dt;
+      p.vy += 1200 * s * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+    }
+    particles = particles.filter(p => p.t < p.life);
+  }
+  function pointInside(b, px, py) {
+    let inside = false;
+    for (let i = 0, j = N - 1; i < N; j = i++) {
+      const xi = b.x[i], yi = b.y[i], xj = b.x[j], yj = b.y[j];
+      if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  function pickBlob(px, py) {
+    for (let k = blobs.length - 1; k >= 0; k--) {
+      const b = blobs[k];
+      if (pointInside(b, px, py) || Math.hypot(b.cx - px, b.cy - py) < 0.9 * b.Rr) return b;
+    }
+    return null;
+  }
+
+  /* ---------- physics ---------- */
+  function gravity() {
+    const m = GRAV[S.grav][1] * s;
+    const d = DIRS[S.dir];
+    return { gx: d[0] * m, gy: d[1] * m };
+  }
+  function stiffness() {
+    const k = STIFF[S.stiff][1];
+    return reduced ? k * 1.4 : k;
+  }
+  function restitution() { return reduced ? Math.min(S.bounce, 0.2) : S.bounce; }
+
+  function startGrab(b, rec) {
+    let k = 0, best = Infinity;
+    for (let i = 0; i < N; i++) {
+      const d = Math.hypot(b.x[i] - rec.P.x, b.y[i] - rec.P.y);
+      if (d < best) { best = d; k = i; }
+    }
+    const rad = 0.85 * b.Rr;
+    const idx = [], w = [], rx = [], ry = [];
+    for (let i = 0; i < N; i++) {
+      const d = Math.hypot(b.x[i] - b.x[k], b.y[i] - b.y[k]);
+      if (d < rad) {
+        const c = Math.cos(Math.PI / 2 * d / rad);
+        idx.push(i); w.push(c * c);
+        rx.push(b.x[i] - rec.P.x); ry.push(b.y[i] - rec.P.y);
+      }
+    }
+    const g = { P: rec.P, idx, w, rx, ry, rec };
+    b.grab = g;
+    rec.grab = g;
+    rec.b = b;
+    wobbleStart();
+  }
+
+  function stepBlob(b, h, gv, kS) {
+    const x = b.x, y = b.y, vx = b.vx, vy = b.vy, ax = AX, ay = AY;
+    const Rr = b.Rr, cx = b.cx, cy = b.cy;
+    const L0 = 2 * Rr * SIN_PI_N;
+    const A0 = 0.5 * N * Rr * Rr * SIN_TAU_N;
+    // 1. gravité
+    for (let i = 0; i < N; i++) { ax[i] = gv.gx; ay[i] = gv.gy; }
+    // 2. ressorts de bord
+    for (let i = 0; i < N; i++) {
+      const j = (i + 1) % N;
+      const dx = x[j] - x[i], dy = y[j] - y[i];
+      const d = Math.hypot(dx, dy) || 1e-9;
+      const f = EDGE_K * (d - L0) / d;
+      ax[i] += f * dx; ay[i] += f * dy;
+      ax[j] -= f * dx; ay[j] -= f * dy;
+    }
+    // 3. mise en forme (sans rotation, angle propre phi)
+    for (let i = 0; i < N; i++) {
+      const t = TAU * i / N + b.phi;
+      ax[i] += kS * (cx + Rr * Math.cos(t) - x[i]);
+      ay[i] += kS * (cy + Rr * Math.sin(t) - y[i]);
+    }
+    // 4. pression (volume constant)
+    let a2 = 0;
+    for (let i = 0; i < N; i++) {
+      const j = (i + 1) % N;
+      a2 += x[i] * y[j] - x[j] * y[i];
+    }
+    const sg = a2 >= 0 ? 1 : -1;
+    const A = Math.abs(a2) / 2;
+    const p = PRESS_K * (A0 - A) / A0;
+    for (let i = 0; i < N; i++) {
+      const pr = (i + N - 1) % N, nx = (i + 1) % N;
+      const tx = x[nx] - x[pr], ty = y[nx] - y[pr];
+      const tl = Math.hypot(tx, ty) || 1e-9;
+      const el = 0.5 * (Math.hypot(x[i] - x[pr], y[i] - y[pr]) + Math.hypot(x[nx] - x[i], y[nx] - y[i]));
+      ax[i] += p * el * (ty / tl) * sg;
+      ay[i] += p * el * (-tx / tl) * sg;
+    }
+    // saisie : les points proches du doigt sont tirés vers le pointeur
+    const g = b.grab;
+    if (g) {
+      const P = g.P;
+      for (let m = 0; m < g.idx.length; m++) {
+        const i = g.idx[m];
+        ax[i] += GRAB_K * g.w[m] * (P.x + g.rx[m] - x[i]);
+        ay[i] += GRAB_K * g.w[m] * (P.y + g.ry[m] - y[i]);
+      }
+    }
+    // 5. intégration des vitesses, amortissements
+    let mx = 0, my = 0;
+    for (let i = 0; i < N; i++) {
+      vx[i] += ax[i] * h; vy[i] += ay[i] * h;
+      mx += vx[i]; my += vy[i];
+    }
+    mx /= N; my /= N;
+    const inn = Math.exp(-INNER_D * h), air = Math.exp(-AIR_D * h);
+    const cap = g ? CAP_GRAB : CAP_ANY;
+    for (let i = 0; i < N; i++) {
+      vx[i] = (mx + (vx[i] - mx) * inn) * air;
+      vy[i] = (my + (vy[i] - my) * inn) * air;
+      const sp = Math.hypot(vx[i], vy[i]);
+      if (sp > cap) { vx[i] *= cap / sp; vy[i] *= cap / sp; }
+    }
+    // 6. position
+    for (let i = 0; i < N; i++) { x[i] += vx[i] * h; y[i] += vy[i] * h; }
+  }
+
+  function contact(a, b) {
+    const dx0 = b.cx - a.cx, dy0 = b.cy - a.cy, lim = a.Rr + b.Rr + 20;
+    if (dx0 * dx0 + dy0 * dy0 > lim * lim) return;
+    const thr = CONTACT * s, thr2 = thr * thr;
+    let best = 0;
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        const ddx = b.x[j] - a.x[i], ddy = b.y[j] - a.y[i];
+        const d2 = ddx * ddx + ddy * ddy;
+        if (d2 >= thr2 || d2 < 1e-10) continue;
+        const d = Math.sqrt(d2), ux = ddx / d, uy = ddy / d, ov = (thr - d) * 0.5;
+        a.x[i] -= ux * ov; a.y[i] -= uy * ov;
+        b.x[j] += ux * ov; b.y[j] += uy * ov;
+        const vrel = (b.vx[j] - a.vx[i]) * ux + (b.vy[j] - a.vy[i]) * uy;
+        if (vrel < 0) {
+          const J = (1 + BLOB_E) * vrel * 0.5;
+          a.vx[i] += J * ux; a.vy[i] += J * uy;
+          b.vx[j] -= J * ux; b.vy[j] -= J * uy;
+          if (-vrel > best) best = -vrel;
+        }
+      }
+    }
+    if (best > 0) {
+      if (best > a.impact) a.impact = best;
+      if (best > b.impact) b.impact = best;
+      if (best > BOING_MIN) {
+        const key = a.id + ',' + b.id;
+        const prev = pairMap.get(key);
+        if (!prev || best > prev.v) pairMap.set(key, { a, b, v: best });
+      }
+    }
+  }
+
+  function walls(b) {
+    const e = restitution();
+    const x = b.x, y = b.y, vx = b.vx, vy = b.vy;
+    let imp = 0;
+    for (let i = 0; i < N; i++) {
+      if (x[i] < 0) {
+        x[i] = 0;
+        if (vx[i] < 0) { const vn = -vx[i]; imp = Math.max(imp, vn); vx[i] = e * vn; vy[i] -= clamp(vy[i], -WALL_FRIC * vn, WALL_FRIC * vn); }
+      } else if (x[i] > W) {
+        x[i] = W;
+        if (vx[i] > 0) { const vn = vx[i]; imp = Math.max(imp, vn); vx[i] = -e * vn; vy[i] -= clamp(vy[i], -WALL_FRIC * vn, WALL_FRIC * vn); }
+      }
+      if (y[i] < 0) {
+        y[i] = 0;
+        if (vy[i] < 0) { const vn = -vy[i]; imp = Math.max(imp, vn); vy[i] = e * vn; vx[i] -= clamp(vx[i], -WALL_FRIC * vn, WALL_FRIC * vn); }
+      } else if (y[i] > H) {
+        y[i] = H;
+        if (vy[i] > 0) { const vn = vy[i]; imp = Math.max(imp, vn); vy[i] = -e * vn; vx[i] -= clamp(vx[i], -WALL_FRIC * vn, WALL_FRIC * vn); }
+      }
+    }
+    if (imp > b.wallImp) b.wallImp = imp;
+    if (imp > b.impact) b.impact = imp;
+  }
+
+  function physics(h) {
+    for (const b of blobs) centroid(b);
+    const gv = gravity(), kS = stiffness();
+    for (const b of blobs) stepBlob(b, h, gv, kS);
+    for (let i = 0; i < blobs.length; i++)
+      for (let j = i + 1; j < blobs.length; j++) contact(blobs[i], blobs[j]);
+    for (const b of blobs) walls(b);
+  }
+  function updatePhi() {
+    for (const b of blobs) {
+      let sum = 0;
+      for (let i = 0; i < N; i++) sum += wrap(Math.atan2(b.y[i] - b.cy, b.x[i] - b.cx) - TAU * i / N);
+      b.phi += 0.25 * wrap(sum / N - b.phi);
+    }
+  }
+  function pushAll(b, ux, uy) {
+    for (let i = 0; i < N; i++) { b.vx[i] += ux; b.vy[i] += uy; }
+  }
+  function radialSquish(b) {
+    centroid(b);
+    for (let i = 0; i < N; i++) {
+      const dx = b.x[i] - b.cx, dy = b.y[i] - b.cy, d = Math.hypot(dx, dy) || 1;
+      b.vx[i] += 520 * dx / d; b.vy[i] += 520 * dy / d;
+    }
+    b.sq = Math.max(b.sq, reduced ? 0.3 : 0.8);
+    squishSound();
+  }
+  function pichenette(b, tx, ty) {
+    const R8 = 0.8 * b.Rr;
+    let any = false;
+    for (let i = 0; i < N; i++) {
+      const dx = b.x[i] - tx, dy = b.y[i] - ty, d = Math.hypot(dx, dy);
+      if (d < R8) {
+        any = true;
+        const c = Math.cos(Math.PI / 2 * d / R8), w = c * c;
+        const ux = d > 1e-6 ? dx / d : 0, uy = d > 1e-6 ? dy / d : 0;
+        b.vx[i] += 520 * ux * w; b.vy[i] += 520 * uy * w;
+      }
+    }
+    if (!any) { radialSquish(b); return; }
+    b.sq = Math.max(b.sq, reduced ? 0.3 : 0.8);
+    squishSound();
+  }
+  function capVelocity(b, max) {
+    for (let i = 0; i < N; i++) {
+      const sp = Math.hypot(b.vx[i], b.vy[i]);
+      if (sp > max) { b.vx[i] *= max / sp; b.vy[i] *= max / sp; }
+    }
+  }
+  function shake() {
+    for (const b of blobs) {
+      const sx = Math.random() < 0.5 ? -1 : 1;
+      pushAll(b, sx * 900 * (0.8 + Math.random() * 0.4), -600 * (0.8 + Math.random() * 0.4));
+    }
+    popSound(true);
+    wake();
+  }
+
+  /* ---------- sound ---------- */
+  let ac = null, master = null, noiseBuf = null, wob = null;
+  let boingTimes = [];
+  function ensureAudio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try { ac = new AC(); } catch (_) { return; }
+      const comp = ac.createDynamicsCompressor();
+      master = ac.createGain();
+      master.gain.value = S.volume;
+      master.connect(comp);
+      comp.connect(ac.destination);
+      // réverbération légère : délai 0,12 s, feedback 0,22, mix 0,2
+      const dl = ac.createDelay(0.5); dl.delayTime.value = 0.12;
+      const fb = ac.createGain(); fb.gain.value = 0.22;
+      const wet = ac.createGain(); wet.gain.value = 0.2;
+      master.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(comp);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+  }
+  function canSound() { return !!(ac && master && S.soundOn); }
+  function env(g, t, peak, attack, decay) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  }
+  // « boing » : sinus qui descend de 1,5·f0 à f0, vibrato 9 Hz, plus un triangle une octave au-dessus
+  function boing(R, speed, when) {
+    if (!canSound()) return;
+    const now = ac.currentTime;
+    boingTimes = boingTimes.filter(t => now - t < 1);
+    if (boingTimes.length >= 12) return;
+    boingTimes.push(now);
+    const f0 = noteFor(R);
+    const gain = clamp(speed / 1400, 0.05, 0.4) * (reduced ? 0.6 : 1);
+    const t0 = now + (when || 0);
+    const o = ac.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(1.5 * f0, t0);
+    o.frequency.exponentialRampToValueAtTime(f0, t0 + 0.11);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 9;
+    const lg = ac.createGain(); lg.gain.value = 0.05 * f0;
+    lfo.connect(lg); lg.connect(o.frequency);
+    const e1 = ac.createGain(); env(e1, t0, gain, 0.003, 0.45);
+    o.connect(e1); e1.connect(master);
+    const o2 = ac.createOscillator(); o2.type = 'triangle';
+    o2.frequency.setValueAtTime(3 * f0, t0);
+    o2.frequency.exponentialRampToValueAtTime(2 * f0, t0 + 0.11);
+    const e2 = ac.createGain(); env(e2, t0, gain * 0.25, 0.003, 0.45);
+    o2.connect(e2); e2.connect(master);
+    o.start(t0); lfo.start(t0); o2.start(t0);
+    o.stop(t0 + 0.5); lfo.stop(t0 + 0.5); o2.stop(t0 + 0.5);
+  }
+  function popSound(up) {
+    if (!canSound()) return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(up ? 300 : 700, t);
+    o.frequency.exponentialRampToValueAtTime(up ? 700 : 300, t + 0.08);
+    const g = ac.createGain(); env(g, t, 0.16, 0.003, 0.1);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.12);
+    if (!up) {
+      const src = ac.createBufferSource(); src.buffer = noiseBuf;
+      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      const ng = ac.createGain(); env(ng, t, 0.08, 0.003, 0.06);
+      src.connect(f); f.connect(ng); ng.connect(master);
+      src.start(t, Math.random() * 0.5); src.stop(t + 0.08);
+    }
+  }
+  // « squish » : bruit filtré passe-bas 600 Hz (90 ms) + sinus 180 → 90 Hz (0,12 s)
+  function squishSound() {
+    if (!canSound()) return;
+    const t = ac.currentTime;
+    const src = ac.createBufferSource(); src.buffer = noiseBuf;
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+    const ng = ac.createGain(); env(ng, t, 0.25, 0.005, 0.09);
+    src.connect(f); f.connect(ng); ng.connect(master);
+    src.start(t, Math.random() * 0.5); src.stop(t + 0.1);
+    const o = ac.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.12);
+    const g = ac.createGain(); env(g, t, 0.2, 0.003, 0.12);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.14);
+  }
+  function bloupSound() {
+    if (!canSound()) return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(120, t + 0.15);
+    const g = ac.createGain(); env(g, t, 0.2, 0.005, 0.2);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.22);
+  }
+  // souffle de glissé : sinus 110 Hz modulé en amplitude à 7 Hz, gain max 0,04
+  function wobbleStart() {
+    if (!canSound() || wob) return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator(); o.frequency.value = 110;
+    const g = ac.createGain(); g.gain.value = 0;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 7;
+    const lg = ac.createGain(); lg.gain.value = 0;
+    lfo.connect(lg); lg.connect(g.gain);
+    o.connect(g); g.connect(master);
+    o.start(t); lfo.start(t);
+    wob = { o, g, lfo, lg };
+  }
+  function wobbleSet(level) {
+    if (!wob || !canSound()) return;
+    const t = ac.currentTime;
+    wob.g.gain.setTargetAtTime(level, t, 0.03);
+    wob.lg.gain.setTargetAtTime(level * 0.5, t, 0.03);
+  }
+  function wobbleStop() {
+    if (!wob) return;
+    const t = ac.currentTime, w = wob;
+    wob = null;
+    w.g.gain.setTargetAtTime(0, t, 0.05);
+    w.o.stop(t + 0.3); w.lfo.stop(t + 0.3);
+  }
+  function applyVolume() {
+    if (master && ac) master.gain.setTargetAtTime(S.volume, ac.currentTime, 0.02);
+  }
+
+  /* ---------- rendering ---------- */
+  function buildBg() {
+    bgCv.width = Math.round(W * dpr);
+    bgCv.height = Math.round(H * dpr);
+    const g = bgCv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const lg = g.createLinearGradient(0, 0, 0, H);
+    lg.addColorStop(0, '#0f3a46');
+    lg.addColorStop(1, '#0a2a34');
+    g.fillStyle = lg;
+    g.fillRect(0, 0, W, H);
+    // sol suggéré : bande plus claire et diffuse en bas
+    const fg = g.createRadialGradient(W / 2, H, 0, W / 2, H, Math.max(W, H) * 0.7);
+    fg.addColorStop(0, 'rgba(140, 215, 230, 0.20)');
+    fg.addColorStop(1, 'rgba(140, 215, 230, 0)');
+    g.fillStyle = fg;
+    g.fillRect(0, 0, W, H);
+    const bb = g.createLinearGradient(0, H * 0.8, 0, H);
+    bb.addColorStop(0, 'rgba(160, 220, 230, 0)');
+    bb.addColorStop(1, 'rgba(160, 220, 230, 0.10)');
+    g.fillStyle = bb;
+    g.fillRect(0, H * 0.8, W, H * 0.2);
+  }
+  function tracePath(b) {
+    const x = b.x, y = b.y;
+    ctx.beginPath();
+    ctx.moveTo(x[0], y[0]);
+    for (let i = 0; i < N; i++) {
+      const p0 = (i + N - 1) % N, p1 = i, p2 = (i + 1) % N, p3 = (i + 2) % N;
+      const c1x = x[p1] + (x[p2] - x[p0]) / 6, c1y = y[p1] + (y[p2] - y[p0]) / 6;
+      const c2x = x[p2] - (x[p3] - x[p1]) / 6, c2y = y[p2] - (y[p3] - y[p1]) / 6;
+      ctx.bezierCurveTo(c1x, c1y, c2x, c2y, x[p2], y[p2]);
+    }
+    ctx.closePath();
+  }
+  function drawShadow(b) {
+    const R = b.Rr;
+    const altitude = clamp((H - b.maxY) / H, 0, 1);
+    const alpha = 0.38 * clamp(1 - altitude * 1.4, 0.2, 1);
+    ctx.save();
+    ctx.translate(b.cx, b.maxY + 3 * s);
+    ctx.scale(R * 0.95, R * 0.16);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    g.addColorStop(0, 'rgba(2, 14, 20, ' + alpha.toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(2, 14, 20, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  function drawBlob(b, selected) {
+    const R = b.Rr, cx = b.cx, cy = b.cy, T = b.tones;
+    const k = reduced ? 0.5 : 1;
+    const sx = 1 + 0.16 * b.sq * k, sy = 1 - 0.16 * b.sq * k;
+    ctx.save();
+    ctx.translate(cx, cy); ctx.scale(sx, sy); ctx.translate(-cx, -cy);
+    tracePath(b);
+    // corps : dégradé radial décalé vers le haut-gauche, translucide
+    const g = ctx.createRadialGradient(cx - 0.28 * R, cy - 0.32 * R, 0.05 * R, cx, cy, 1.25 * R);
+    g.addColorStop(0, T.light);
+    g.addColorStop(0.6, T.mid);
+    g.addColorStop(1, T.edge);
+    ctx.globalAlpha = 0.93;
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // volume intérieur et lueur interne
+    ctx.save();
+    ctx.clip();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = T.rim;
+    ctx.stroke();
+    const sg = ctx.createRadialGradient(cx, cy + 0.9 * R, 0, cx, cy + 0.9 * R, 1.1 * R);
+    sg.addColorStop(0, T.sub);
+    sg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(cx - 2 * R, cy - 2 * R, 4 * R, 4 * R);
+    ctx.restore();
+    // reflet spéculaire, orienté indépendamment de la rotation
+    ctx.save();
+    ctx.translate(cx - 0.36 * R, cy - 0.42 * R);
+    ctx.rotate(-0.5);
+    ctx.scale(0.26 * R, 0.14 * R);
+    const sp = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    sp.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+    sp.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = sp;
+    ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.arc(cx + 0.42 * R, cy - 0.36 * R, 0.07 * R, 0, TAU);
+    ctx.fill();
+    if (selected) {
+      tracePath(b);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffd166';
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(bgCv, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (const b of blobs) drawShadow(b);
+    for (const b of blobs) drawBlob(b, ringOn && b.id === selId);
+    for (const p of particles) {
+      ctx.globalAlpha = 1 - p.t / p.life;
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - 0.5 * p.t / p.life), 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- frame loop ---------- */
+  function wake() {
+    if (running) return;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    const dt = clamp((now - last) / 1000, 0, 1 / 30);
+    last = now;
+    if (paused) { draw(); running = false; return; }
+    for (const b of blobs) {
+      if (b.popT >= 0) { b.popT += dt; if (b.popT >= POP_T) b.popT = -1; }
+      b.Rr = b.R * popScale(b.popT);
+      b.sq *= Math.exp(-6 * dt);
+    }
+    updatePhi();
+    const h = dt / SUBSTEPS;
+    for (let k = 0; k < SUBSTEPS; k++) physics(h);
+    for (const b of blobs) {
+      if (!Number.isFinite(b.cx) || !Number.isFinite(b.cy)) {  // garde-fou : jamais de NaN affiché
+        for (let i = 0; i < N; i++) { b.x[i] = W / 2; b.y[i] = H / 2; b.vx[i] = 0; b.vy[i] = 0; }
+      }
+      let my = 0;
+      for (let i = 0; i < N; i++) if (b.y[i] > my) my = b.y[i];
+      b.maxY = my;
+      if (b.wallImp > BOING_MIN) boing(b.R, b.wallImp, 0);
+      b.wallImp = 0;
+      if (b.impact > 0) {
+        const q = clamp(b.impact / 1400, 0, 1) * (reduced ? 0.5 : 1);
+        if (q > b.sq) b.sq = q;
+        b.impact = 0;
+      }
+    }
+    for (const ev of pairMap.values()) { boing(ev.a.R, ev.v, 0); boing(ev.b.R, ev.v, 0.015); }
+    pairMap.clear();
+    updateParticles(dt);
+    // suivi de la saisie (souffle) et détection de repos
+    let dragLevel = 0;
+    for (const rec of pointers.values()) {
+      if (rec.grab) {
+        const sp = Math.hypot(rec.P.x - rec.lastX, rec.P.y - rec.lastY) / Math.max(dt, 1e-3);
+        rec.lastX = rec.P.x; rec.lastY = rec.P.y;
+        dragLevel = Math.max(dragLevel, Math.min(0.04, sp * 0.00005));
+      }
+    }
+    if (wob) wobbleSet(dragLevel);
+    let spSum = 0;
+    for (const b of blobs) for (let i = 0; i < N; i++) spSum += Math.hypot(b.vx[i], b.vy[i]);
+    const avg = blobs.length ? spSum / (blobs.length * N) : 0;
+    const grabbing = [...pointers.values()].some(r => r.grab);
+    const busy = grabbing || particles.length > 0 || blobs.some(b => b.popT >= 0 || b.sq > 0.02);
+    draw();
+    if (!busy && avg < 6) quiet += dt; else quiet = 0;
+    if (quiet > 0.8) { running = false; quiet = 0; return; }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- resize ---------- */
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    s = clamp(Math.min(W, H) / 720, 0.7, 1.3);
+    buildBg();
+    wake();
+  }
+  let rzT = 0;
+  window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(resize, 120); });
+
+  /* ---------- pointer input ---------- */
+  function poke() {
+    hintEl.classList.add('gone');
+  }
+  function release(e) {
+    const rec = pointers.get(e.pointerId);
+    if (!rec) return;
+    pointers.delete(e.pointerId);
+    const dur = performance.now() - rec.t0;
+    const moved = Math.hypot(rec.P.x - rec.x0, rec.P.y - rec.y0);
+    if (rec.grab) {
+      const b = rec.b;
+      if (b && b.grab === rec.grab) {
+        b.grab = null;
+        capVelocity(b, CAP_RELEASE);
+        if (dur < 180 && moved < 8) pichenette(b, rec.P.x, rec.P.y);
+      }
+    } else if (!rec.b && dur < 250 && moved < 10) {
+      const b = spawnAt(rec.P.x, rec.P.y, true);
+      announce('Gelée ajoutée');
+      void b;
+    }
+    if (!wob || ![...pointers.values()].some(r => r.grab)) wobbleStop();
+    wake();
+  }
+  canvas.addEventListener('pointerdown', e => {
+    poke();
+    ensureAudio();
+    ringOn = false;
+    const P = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY };
+    const rec = { P, b: null, grab: null, t0: performance.now(), x0: P.x, y0: P.y, lastX: P.x, lastY: P.y };
+    pointers.set(e.pointerId, rec);
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    const b = pickBlob(P.x, P.y);
+    if (b && !b.grab) startGrab(b, rec);
+    else if (b) rec.b = b;                       // un doigt par gelée : le second doigt ne saisit pas
+    wake();
+  });
+  canvas.addEventListener('pointermove', e => {
+    const rec = pointers.get(e.pointerId);
+    if (!rec) return;
+    rec.P.x = e.clientX; rec.P.y = e.clientY;
+    wake();
+  });
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ---------- keyboard ---------- */
+  function selBlob() { return blobs.find(b => b.id === selId) || null; }
+  function cycleSel(dir) {
+    if (!blobs.length) return;
+    let k = blobs.findIndex(b => b.id === selId);
+    k = k < 0 ? (dir > 0 ? 0 : blobs.length - 1) : (k + dir + blobs.length) % blobs.length;
+    selId = blobs[k].id;
+    ringOn = true;
+    announce('Gelée ' + (k + 1) + ' sur ' + blobs.length + ' choisie');
+    wake();
+  }
+  window.addEventListener('keydown', e => {
+    const inDrawer = !!(e.target.closest && e.target.closest('.drawer'));
+    if (e.key === 'Escape') { setDrawer(false); return; }
+    if (inDrawer) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'button' || e.ctrlKey || e.metaKey || e.altKey) return;
+    const onCanvas = e.target === canvas || e.target === document.body;
+    if (e.key === 'Tab') {
+      if (blobs.length && onCanvas) { e.preventDefault(); cycleSel(e.shiftKey ? -1 : 1); }
+      return;
+    }
+    if (e.key.startsWith('Arrow')) {
+      const b = selBlob();
+      if (!b) return;
+      e.preventDefault();
+      const v = e.shiftKey ? 900 : 420;
+      const ux = e.key === 'ArrowLeft' ? -v : e.key === 'ArrowRight' ? v : 0;
+      const uy = e.key === 'ArrowUp' ? -v : e.key === 'ArrowDown' ? v : 0;
+      pushAll(b, ux, uy);
+      b.sq = Math.max(b.sq, reduced ? 0.2 : 0.4);
+      ringOn = true; wake();
+      return;
+    }
+    if (e.key === 'Delete') {
+      const b = selBlob();
+      if (b) { removeBlob(b, true); announce('Gelée supprimée'); }
+      return;
+    }
+    const k = e.key.toLowerCase();
+    if (e.code === 'Space' && onCanvas) {
+      e.preventDefault();
+      poke(); ensureAudio();
+      const b = selBlob();
+      if (b) radialSquish(b);
+      wake();
+    } else if (k === 'n') { poke(); ensureAudio(); spawnRandom(); }
+    else if (k === 'g') { poke(); ensureAudio(); cycleGravity(); }
+    else if (k === 's') { poke(); ensureAudio(); shake(); }
+    else if (k === 'p') togglePause();
+    else if (k === 'm') toggleSound();
+    else if (k === 'h') toggleUI();
+    else if (k === 'f') toggleFullscreen();
+  });
+
+  /* ---------- actions ---------- */
+  function spawnRandom() {
+    const b = spawnAt(W * (0.25 + Math.random() * 0.5), H * 0.2, true);
+    announce('Gelée ajoutée');
+    return b;
+  }
+  function cycleGravity() {
+    const i = GORDER.indexOf(S.grav);
+    S.grav = GORDER[(i + 1) % GORDER.length];
+    saveS();
+    updateCount();
+    syncAll();
+    announce('Gravité : ' + GRAV[S.grav][0]);
+    wake();
+  }
+  function clearAll() {
+    for (const b of blobs) { b.grab = null; burst(b); }
+    if (blobs.length) popSound(false);
+    blobs = [];
+    selId = 0;
+    updateCount();
+    announce('Plateau vidé');
+    wake();
+  }
+  function togglePause() {
+    paused = !paused;
+    syncIcons();
+    if (!paused) wake(); else announce('Pause');
+    if (paused) wobbleStop();
+  }
+  function toggleSound() {
+    S.soundOn = !S.soundOn;
+    saveS();
+    if (S.soundOn) ensureAudio(); else wobbleStop();
+    syncAll();
+    announce(S.soundOn ? 'Son activé' : 'Son coupé');
+  }
+  function toggleUI() {
+    document.body.classList.toggle('ui-hidden');
+    if (document.body.classList.contains('ui-hidden')) setDrawer(false);
+  }
+  function toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    } catch (_) {}
+  }
+  function resetSettings() {
+    S = Object.assign({}, DEF);
+    saveS();
+    applyVolume();
+    recolorAll();
+    syncAll();
+    announce('Réglages remis à zéro');
+  }
+  function recolorAll() {
+    const pal = PALETTES[S.pal][1];
+    blobs.forEach((b, i) => { b.tones = toneOf(pal[i % pal.length]); });
+  }
+
+  /* ---------- interface ---------- */
+  const ICON = {
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fill" x="6" y="5" width="4" height="14" rx="1"/><rect class="fill" x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M8 5l11 7-11 7z"/></svg>',
+    on: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>',
+    off: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
+    set: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M4 12h16"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  };
+  const btnPause = $('btnPause'), btnSound = $('btnSound'), btnSet = $('btnSet'), btnClose = $('btnClose'), btnShow = $('btnShow');
+  const drawer = $('drawer');
+  btnSet.innerHTML = ICON.set;
+  btnClose.innerHTML = ICON.close;
+  btnShow.innerHTML = ICON.eye;
+  btnShow.addEventListener('click', toggleUI);
+  function syncIcons() {
+    btnPause.innerHTML = paused ? ICON.play : ICON.pause;
+    btnPause.setAttribute('aria-label', paused ? 'Reprendre' : 'Mettre en pause');
+    btnSound.innerHTML = S.soundOn ? ICON.on : ICON.off;
+    btnSound.setAttribute('aria-label', S.soundOn ? 'Couper le son' : 'Activer le son');
+  }
+  function setDrawer(open) {
+    drawer.classList.toggle('open', open);
+    btnSet.setAttribute('aria-expanded', String(open));
+    if (open) btnClose.focus();
+    else if (drawer.contains(document.activeElement)) btnSet.focus();
+  }
+  btnPause.addEventListener('click', () => { ensureAudio(); togglePause(); });
+  btnSound.addEventListener('click', () => { ensureAudio(); toggleSound(); });
+  btnSet.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+  btnClose.addEventListener('click', () => setDrawer(false));
+
+  const toolsEl = $('tools');
+  function toolButton(label, fn) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.addEventListener('click', () => { poke(); ensureAudio(); fn(); });
+    toolsEl.appendChild(b);
+    return b;
+  }
+  const btnShake = toolButton('Secouer', shake);
+  const btnGrav = toolButton('Gravité', cycleGravity);
+  const btnNew = toolButton('Nouveau', spawnRandom);
+  const btnClear = toolButton('Vider', clearAll);
+
+  const selStiff = $('s-stiff'), selGrav = $('s-grav'), selDir = $('s-dir'), selSize = $('s-size'), selPal = $('s-pal');
+  const rngBounce = $('s-bounce'), outBounce = $('o-bounce'), rngVol = $('s-vol'), outVol = $('o-vol'), togSound = $('s-sound');
+  function syncAll() {
+    selStiff.value = S.stiff;
+    selGrav.value = S.grav;
+    selDir.value = S.dir;
+    selSize.value = S.size;
+    selPal.value = S.pal;
+    rngBounce.value = S.bounce;
+    outBounce.textContent = S.bounce.toFixed(2);
+    rngVol.value = S.volume;
+    outVol.textContent = Math.round(S.volume * 100) + ' %';
+    togSound.checked = S.soundOn;
+    btnGrav.textContent = 'Gravité : ' + GRAV[S.grav][0];
+    btnGrav.setAttribute('aria-label', 'Gravité, actuellement ' + GRAV[S.grav][0].toLowerCase() + ' (G)');
+    btnGrav.title = 'Gravité (G)';
+    btnShake.title = 'Secouer (S)';
+    btnNew.title = 'Nouveau (N)';
+    btnClear.title = 'Vider le plateau';
+    syncIcons();
+    updateCount();
+  }
+  selStiff.addEventListener('change', () => { S.stiff = selStiff.value; saveS(); });
+  selGrav.addEventListener('change', () => { S.grav = selGrav.value; saveS(); syncAll(); announce('Gravité : ' + GRAV[S.grav][0]); wake(); });
+  selDir.addEventListener('change', () => { S.dir = selDir.value; saveS(); syncAll(); wake(); });
+  selSize.addEventListener('change', () => { S.size = selSize.value; saveS(); });
+  selPal.addEventListener('change', () => { S.pal = selPal.value; saveS(); recolorAll(); wake(); });
+  rngBounce.addEventListener('input', () => { S.bounce = +rngBounce.value; outBounce.textContent = S.bounce.toFixed(2); saveS(); });
+  rngVol.addEventListener('input', () => { S.volume = +rngVol.value; outVol.textContent = Math.round(S.volume * 100) + ' %'; saveS(); if (S.volume > 0) ensureAudio(); applyVolume(); });
+  togSound.addEventListener('change', () => { S.soundOn = togSound.checked; saveS(); if (S.soundOn) ensureAudio(); else wobbleStop(); syncIcons(); });
+  $('btnReset').addEventListener('click', resetSettings);
+
+  reducedMQ.addEventListener && reducedMQ.addEventListener('change', e => { reduced = e.matches; wake(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      wobbleStop();
+      if (ac && ac.state === 'running') ac.suspend().catch(() => {});
+    } else {
+      if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+      wake();
+    }
+  });
+
+  /* ---------- start ---------- */
+  resize();
+  syncAll();
+  applyVolume();
+  // quatre gelées tombent en cascade, à 150 ms d'intervalle
+  const START = [[0.2, 72], [0.42, 54], [0.62, 64], [0.8, 48]];
+  START.forEach(([fx, r], i) => {
+    setTimeout(() => {
+      const [lo, hi] = SIZES[S.size];
+      void lo; void hi;
+      const R = r * s;
+      const x = clamp(W * fx, R, W - R);
+      const b = makeBlob(x, R + 6 * s, R, nextHex(), false);
+      b.cx = x; b.cy = R + 6 * s;
+      blobs.push(b);
+      updateCount();
+      wake();
+    }, i * 150);
+  });
+  updateCount();
+  wake();
+})();
+</script>
+</body>
+</html>
