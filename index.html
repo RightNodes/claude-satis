@@ -186,6 +186,52 @@
     .do-d:nth-child(-n+12) { transform: translateX(6.3px) scaleX(3.4); fill: var(--c); }
   }
 
+
+  .la-dirt { animation: la-wipe 5s ease-in-out infinite; }
+  .la-d { animation: la-spray 1.1s ease-out infinite; }
+  @keyframes la-wipe {
+    0% { transform: translateX(0); opacity: 0; }
+    4% { transform: translateX(0); opacity: 1; }
+    80% { transform: translateX(160px); opacity: 1; }
+    100% { transform: translateX(160px); opacity: 1; }
+  }
+  @keyframes la-spray {
+    0% { transform: translate(0, 0); opacity: 0.95; }
+    100% { transform: translate(-10px, -16px); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .la-dirt { animation: none; transform: translateX(80px); }
+    .la-d { display: none; }
+  }
+
+
+  .ge-b { transform-box: fill-box; transform-origin: 50% 100%; animation-name: ge-jump; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+  .ge-s { transform-box: fill-box; transform-origin: 50% 50%; animation-name: ge-shadow; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+  @keyframes ge-jump {
+    0%, 8% { transform: translateY(0) scale(1.22, .78); }
+    40% { transform: translateY(-34px) scale(.92, 1.08); }
+    62%, 70% { transform: translateY(0) scale(1.22, .78); }
+    78% { transform: translateY(0) scale(.96, 1.04); }
+    86%, 100% { transform: translateY(0) scale(1, 1); }
+  }
+  @keyframes ge-shadow {
+    0%, 8%, 62%, 70%, 100% { transform: scale(1); opacity: .35; }
+    40% { transform: scale(.55); opacity: .12; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ge-b, .ge-s { animation: none; }
+    .ge-s { opacity: .3; }
+  }
+
+
+  .mb-g { transform-box: fill-box; transform-origin: center; animation: mb-wave 5s ease-in-out infinite; }
+  .mb-g2 { animation-delay: -1.6s; }
+  .mb-g3 { animation-delay: -3.2s; }
+  .mb-comb { animation: mb-pass 5s linear infinite; opacity: 0; }
+  @keyframes mb-wave { 0%, 100% { transform: skewX(-7deg) translateX(-3px); } 50% { transform: skewX(7deg) translateX(3px); } }
+  @keyframes mb-pass { 0% { transform: translateX(-20px); opacity: 0; } 8% { opacity: 1; } 84% { opacity: 1; } 100% { transform: translateX(180px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .mb-g, .mb-comb { animation: none; } .mb-comb { opacity: 0; } }
+
 </style>
 </head>
 <body>
@@ -520,6 +566,88 @@
       <div class="body">
         <h2>Dominos</h2>
         <p>Trace des chemins de dominos, touche le premier : la vague claque, grimpe en gamme et dévoile ses couleurs.</p>
+        <span class="tag">Jouer</span>
+      </div>
+    </a>
+
+    <a class="card" href="jeux/lavage.html">
+  <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect x="0" y="0" width="160" height="100" fill="#e9e4d8"/>
+    <g>
+      <rect x="1.5" y="1.5" width="37" height="47" fill="#ff6b81"/>
+      <rect x="41.5" y="1.5" width="37" height="47" fill="#ffd166"/>
+      <rect x="81.5" y="1.5" width="37" height="47" fill="#7bdff2"/>
+      <rect x="121.5" y="1.5" width="37" height="47" fill="#b8f2a0"/>
+      <rect x="1.5" y="51.5" width="37" height="47" fill="#c9a7ff"/>
+      <rect x="41.5" y="51.5" width="37" height="47" fill="#ff9f68"/>
+      <rect x="81.5" y="51.5" width="37" height="47" fill="#f4efe4"/>
+      <rect x="121.5" y="51.5" width="37" height="47" fill="#7bdff2"/>
+    </g>
+    <g class="la-dirt">
+      <rect x="0" y="0" width="160" height="100" fill="#5a4c40"/>
+      <circle cx="30" cy="22" r="16" fill="#3f352c" opacity="0.6"/>
+      <circle cx="96" cy="70" r="20" fill="#3f352c" opacity="0.5"/>
+      <circle cx="140" cy="24" r="14" fill="#3f352c" opacity="0.55"/>
+      <rect x="62" y="0" width="3" height="34" fill="#2a2119" opacity="0.6"/>
+      <rect x="118" y="0" width="4" height="46" fill="#2a2119" opacity="0.5"/>
+      <circle cx="0" cy="50" r="8" fill="#d8f6ff" opacity="0.9"/>
+      <circle class="la-d" cx="-4" cy="40" r="2" fill="#ffffff" style="animation-delay:-0.2s"/>
+      <circle class="la-d" cx="-6" cy="58" r="1.6" fill="#ffffff" style="animation-delay:-0.9s"/>
+      <circle class="la-d" cx="-2" cy="66" r="2.2" fill="#ffffff" style="animation-delay:-1.5s"/>
+    </g>
+  </svg>
+  <div class="body">
+    <h2>Lavage</h2>
+    <p>Passe le jet sur la crasse : elle s'envole en gouttelettes et révèle des couleurs éclatantes.</p>
+    <span class="tag">Jouer</span>
+  </div>
+</a>
+
+    <a class="card" href="jeux/gelee.html">
+      <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect x="0" y="90" width="160" height="10" fill="#7fc9d6" opacity=".12"/>
+          <ellipse class="ge-s ge-p1-s" cx="44" cy="90" rx="15.8" ry="2.6" fill="#02141a" style="animation-duration:1.6s;animation-delay:-0.2s"/>
+          <ellipse class="ge-s ge-p2-s" cx="80" cy="90" rx="19.9" ry="2.6" fill="#02141a" style="animation-duration:1.9s;animation-delay:-1.1s"/>
+          <ellipse class="ge-s ge-p3-s" cx="118" cy="90" rx="13.7" ry="2.6" fill="#02141a" style="animation-duration:2.2s;animation-delay:-1.7s"/>
+          <g class="ge-b ge-p1" style="animation-duration:1.6s;animation-delay:-0.2s"><path d="M44.0,60.0 C52.3,60.0 59.0,66.7 59.0,75.0 C59.0,83.3 52.3,90.0 44.0,90.0 C35.7,90.0 29.0,83.3 29.0,75.0 C29.0,66.7 35.7,60.0 44.0,60.0Z" fill="#ff6b81" fill-opacity=".93"/><ellipse cx="38.3" cy="68.2" rx="3.9" ry="2.1" transform="rotate(-30 38.3 68.2)" fill="#fff" opacity=".55"/></g>
+          <g class="ge-b ge-p2" style="animation-duration:1.9s;animation-delay:-1.1s"><path d="M80.0,52.0 C90.5,52.0 99.0,60.5 99.0,71.0 C99.0,81.5 90.5,90.0 80.0,90.0 C69.5,90.0 61.0,81.5 61.0,71.0 C61.0,60.5 69.5,52.0 80.0,52.0Z" fill="#ffd166" fill-opacity=".93"/><ellipse cx="72.8" cy="62.5" rx="4.9" ry="2.7" transform="rotate(-30 72.8 62.5)" fill="#fff" opacity=".55"/></g>
+          <g class="ge-b ge-p3" style="animation-duration:2.2s;animation-delay:-1.7s"><path d="M118.0,64.0 C125.2,64.0 131.0,69.8 131.0,77.0 C131.0,84.2 125.2,90.0 118.0,90.0 C110.8,90.0 105.0,84.2 105.0,77.0 C105.0,69.8 110.8,64.0 118.0,64.0Z" fill="#7bdff2" fill-opacity=".93"/><ellipse cx="113.1" cy="71.2" rx="3.4" ry="1.8" transform="rotate(-30 113.1 71.2)" fill="#fff" opacity=".55"/></g>
+      </svg>
+      <div class="body">
+        <h2>Gelée</h2>
+        <p>Attrape, lance et écrase des gelées : elles tremblent, rebondissent et font boing.</p>
+        <span class="tag">Jouer</span>
+      </div>
+    </a>
+
+    <a class="card" href="jeux/marbre.html">
+      <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="mb-bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0b3c5d"/>
+            <stop offset="1" stop-color="#1d6a7e"/>
+          </linearGradient>
+        </defs>
+        <rect width="160" height="100" fill="url(#mb-bg)"/>
+        <g class="mb-g mb-g1">
+          <path fill="#7bdff2" d="M-10 12 C25 0 55 24 92 10 S150 2 170 14 V22 C150 14 120 30 88 22 S30 14 -10 26 Z"/>
+          <path fill="#f4efe4" d="M-10 30 C30 20 58 40 94 28 S150 22 170 32 V38 C150 32 120 46 88 40 S30 32 -10 42 Z"/>
+          <path fill="#ffd166" d="M-10 48 C26 40 58 60 94 48 S150 42 170 52 V58 C150 52 122 66 88 58 S30 52 -10 62 Z"/>
+        </g>
+        <g class="mb-g mb-g2">
+          <path fill="#ff7eb6" d="M-10 64 C30 56 60 74 96 62 S150 58 170 68 V74 C150 68 120 82 88 74 S30 68 -10 78 Z"/>
+          <path fill="#0b3c5d" d="M-10 80 C28 72 60 90 96 78 S150 74 170 84 V90 C150 84 122 98 88 90 S30 84 -10 94 Z"/>
+        </g>
+        <g class="mb-g mb-g3">
+          <path fill="#b8f2a0" d="M-10 4 C20 -2 50 10 84 2 S140 -2 170 6 V9 C140 4 110 14 80 8 S30 2 -10 12 Z" opacity="0.8"/>
+        </g>
+        <g class="mb-comb" fill="none" stroke="#fff8e8" stroke-width="1.6" stroke-linecap="round">
+          <path d="M0 16 l-10 6 M0 32 l-10 6 M0 48 l-10 6 M0 64 l-10 6 M0 80 l-10 6"/>
+        </g>
+      </svg>
+      <div class="body">
+        <h2>Marbre</h2>
+        <p>Tire un peigne dans l'encre : les couleurs s'étirent en plumes et en vagues soyeuses.</p>
         <span class="tag">Jouer</span>
       </div>
     </a>
