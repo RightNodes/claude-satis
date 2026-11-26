@@ -515,7 +515,7 @@
     }
 
     // anneau de prévisualisation d'aimantation
-    if (pd && pd.kind === 'wheel' && pd.moved && pd.target != null) {
+    if (pd && pd.moved && pd.target != null) {
       const t = wheels.find(w => w.id === pd.target);
       if (t) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1191,7 +1191,6 @@
   syncSettings();
   window.addEventListener('resize', resize);
   resize();
-  if (location.hash === '#test') window.__en = { wheels: () => wheels.map(w => ({ id: w.id, N: w.N, x: w.x, y: w.y, rot: w.rot, w: w.w, motor: w.motor, tk: w.tk })), sound: () => ({ ac: !!AC, state: AC && AC.state, tokens }) };
 })();
 </script>
 </body>
