@@ -79,6 +79,9 @@
   .card.soon { opacity: 0.55; border-style: dashed; }
   .card.soon .thumb { display: grid; place-items: center; font-size: 44px; color: var(--ink-2); }
   .card.soon .tag { background: transparent; color: var(--ink-2); border: 1px solid var(--line); }
+  h2.cat { margin: 44px 0 0; font-size: 15px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  h2.cat + .grid { margin-top: 16px; }
+  h2.cat:has(+ .grid:empty), .grid:empty { display: none; }
   footer { margin-top: 48px; font-size: 14px; color: var(--ink-2); }
 
   /* marbles falling in the Billes thumbnail */
@@ -237,8 +240,9 @@
 <body>
 <main class="wrap">
   <h1>satis<span>.</span></h1>
-  <p class="lead">Une petite collection de jeux apaisants — le genre où on ne gagne rien, mais où tout est agréable.</p>
+  <p class="lead">Une petite collection de jeux et d'ambiances apaisants — le genre où on ne gagne rien, mais où tout est agréable.</p>
 
+  <h2 class="cat">Jeux</h2>
   <div class="grid" id="grid">
     <a class="card" href="jeux/billes.html">
       <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -662,7 +666,10 @@
     </div>
   </div>
 
-  <footer>Ajoute un jeu : dépose un fichier dans <code>jeux/</code> et une carte dans <code>index.html</code>.</footer>
+  <h2 class="cat">Audio</h2>
+  <div class="grid" id="audio"><!--AUDIO-CARDS--></div>
+
+  <footer>Ajoute un jeu : dépose un fichier dans <code>jeux/</code> (ou <code>audio/</code>) et une carte dans <code>index.html</code>.</footer>
 </main>
 </body>
 </html>
