@@ -1,6 +1,7 @@
 # satis — galerie de jeux
 
 - `index.html` : galerie
+- `audio/ambiances.html` : mélangeur d'ambiances sonores (pluie, océan, feu…), sons synthétisés en direct
 - `jeux/` : un fichier autonome par jeu — billes, tranche, bulles, sable, mandala, dominos, lavage, gelée, marbre
 
 Ouvrir `index.html` dans un navigateur suffit, aucun build.

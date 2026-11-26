@@ -235,6 +235,24 @@
   @keyframes mb-pass { 0% { transform: translateX(-20px); opacity: 0; } 8% { opacity: 1; } 84% { opacity: 1; } 100% { transform: translateX(180px); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .mb-g, .mb-comb { animation: none; } .mb-comb { opacity: 0; } }
 
+
+  .am-s { animation: am-twinkle 4.2s ease-in-out infinite; }
+  .am-s1 { animation-delay: -0.4s; } .am-s2 { animation-delay: -1.9s; } .am-s3 { animation-delay: -2.7s; }
+  .am-s4 { animation-delay: -0.9s; } .am-s5 { animation-delay: -3.3s; } .am-s6 { animation-delay: -1.4s; }
+  @keyframes am-twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+  .am-rain { animation: am-fall 1.4s linear infinite; }
+  @keyframes am-fall { from { transform: translate(0, -10px); } to { transform: translate(-4px, 30px); } }
+  .am-w { transform-box: fill-box; transform-origin: center; animation: am-wave 5s ease-in-out infinite; }
+  .am-w2 { animation-delay: -1.7s; }
+  .am-w3 { animation-delay: -3.2s; }
+  @keyframes am-wave { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+  .am-fire { transform-box: fill-box; transform-origin: center bottom; animation: am-flicker 1.6s ease-in-out infinite; }
+  @keyframes am-flicker { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(.92, 1.08); } 60% { transform: scale(1.05, .95); } }
+  @media (prefers-reduced-motion: reduce) {
+    .am-s, .am-rain, .am-w, .am-fire { animation: none; }
+    .am-rain { transform: translate(0, 0); }
+  }
+
 </style>
 </head>
 <body>
@@ -667,7 +685,49 @@
   </div>
 
   <h2 class="cat">Audio</h2>
-  <div class="grid" id="audio"><!--AUDIO-CARDS--></div>
+  <div class="grid" id="audio">
+    <a class="card" href="audio/ambiances.html">
+  <svg class="thumb" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="am-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0b2d39"/><stop offset="1" stop-color="#15505e"/>
+      </linearGradient>
+      <linearGradient id="am-fl" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff8a4c"/>
+      </linearGradient>
+    </defs>
+    <rect width="160" height="100" fill="url(#am-bg)"/>
+    <circle cx="128" cy="22" r="8" fill="#f4efe4" opacity=".85"/>
+    <circle cx="132" cy="19" r="7" fill="#0b2d39" opacity=".35"/>
+    <g fill="#f4efe4">
+      <circle class="am-s am-s1" cx="20" cy="14" r="1"/>
+      <circle class="am-s am-s2" cx="48" cy="8" r=".8"/>
+      <circle class="am-s am-s3" cx="80" cy="18" r="1.1"/>
+      <circle class="am-s am-s4" cx="104" cy="6" r=".8"/>
+      <circle class="am-s am-s5" cx="148" cy="42" r=".9"/>
+      <circle class="am-s am-s6" cx="34" cy="38" r=".7"/>
+    </g>
+    <g class="am-rain" stroke="#a9dbe6" stroke-width="1" stroke-linecap="round" opacity=".55">
+      <line x1="30" y1="0" x2="26" y2="8"/>
+      <line x1="58" y1="0" x2="54" y2="8"/>
+      <line x1="86" y1="0" x2="82" y2="8"/>
+      <line x1="114" y1="0" x2="110" y2="8"/>
+      <line x1="142" y1="0" x2="138" y2="8"/>
+    </g>
+    <path class="am-w am-w1" d="M-10 66 C10 56 30 76 50 66 S90 56 110 66 S150 76 170 66 V100 H-10 Z" fill="#2a7d8e" opacity=".7"/>
+    <path class="am-w am-w2" d="M-10 76 C14 68 36 84 60 76 S104 68 130 78 S160 82 170 76 V100 H-10 Z" fill="#1f6676"/>
+    <path class="am-w am-w3" d="M-10 86 C20 80 40 92 70 86 S120 80 170 88 V100 H-10 Z" fill="#17505e"/>
+    <g class="am-fire">
+      <path d="M124 98 C118 92 118 86 122 82 C122 86 124 88 126 88 C124 84 126 78 130 74 C131 82 134 86 134 92 C134 96 130 98 124 98 Z" fill="url(#am-fl)"/>
+    </g>
+  </svg>
+  <div class="body">
+    <h2>Ambiances</h2>
+    <p>Mélange pluie, océan, feu de camp et forêt pour te détendre ou t'endormir : tout est synthétisé en direct.</p>
+    <span class="tag">Écouter</span>
+  </div>
+</a>
+  </div>
 
   <footer>Ajoute un jeu : dépose un fichier dans <code>jeux/</code> (ou <code>audio/</code>) et une carte dans <code>index.html</code>.</footer>
 </main>
