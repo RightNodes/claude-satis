@@ -65,10 +65,14 @@
     max-width: calc(100vw - 190px);
     box-sizing: border-box;
     z-index: 5;
-    border-radius: 0 0 26px 0;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--bg) 78%, transparent) 0%, color-mix(in srgb, var(--bg) 50%, transparent) 75%, transparent 100%);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    inset: 0 -80px -50px -20px;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 100% 100% at 0% 0%, color-mix(in srgb, var(--bg) 72%, transparent) 30%, transparent 100%);
   }
   .back {
     align-self: flex-start;
@@ -275,7 +279,8 @@
 
   @media (max-width: 639px) {
     .iconbtn { width: 44px; height: 44px; }
-    header { max-width: none; width: 100%; padding-top: max(14px, env(safe-area-inset-top)); }
+    /* backdrop-filter créerait un bloc englobant qui casse le bouton fixe en bas */
+    header { max-width: none; width: 100%; padding-top: max(14px, env(safe-area-inset-top)); backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0 0 22px 0; }
     .back { margin-bottom: 6px; }
     .count { margin-top: 4px; }
     .bar { gap: 6px; right: max(12px, env(safe-area-inset-right)); }
@@ -397,7 +402,7 @@
   // couche humide (demi-résolution), particules et étoiles
   let wet = mk(), wctx = null, wetLife = 0;
   const drops = [], chips = [], stars = [];
-  let paused = false, dirX = 1, dirY = 0, fpsN = 0, fpsT = 0, grimeOff = 0;
+  let paused = false, dirX = 1, dirY = 0, fpsN = 0, fpsT = 0;
   const fpsEl = $('fps');
   const marks = { 25: false, 50: false, 75: false };
 
@@ -757,6 +762,7 @@
   const release = e => {
     if (e.pointerId !== jet.id) return;
     jet.down = false; jet.id = -1;
+    if (e.pointerType !== 'mouse') jet.show = false;
     sampleT = 0.15;
     wake();
   };
@@ -811,7 +817,8 @@
     surfIdx = idx;
     paintSurface(idx);
     makeGrime(S.grime === 'epaisse');
-    pct = 0; tier = 0; barFill.style.transform = 'scaleX(0)';
+    pct = 0; tier = 0; marks[25] = marks[50] = marks[75] = false;
+    barFill.style.transform = 'scaleX(0)';
     sample();
     updateCount();
   }
@@ -1280,7 +1287,6 @@
   fpsEl.hidden = !S.fps;
   syncPanel();
   wake();
-  window.__lavage = { get state() { return state; }, get pct() { return pct; }, get C() { return C; }, get jet() { return jet; }, sample, startFinish, get paused() { return paused; } };
 })();
 </script>
 </body>

@@ -977,11 +977,12 @@
       b.maxY = my;
       if (b.wallImp > BOING_MIN) boing(b.R, b.wallImp, 0);
       b.wallImp = 0;
-      if (b.impact > 0) {
+      // squash seulement sur un vrai choc (le poids au repos ne déclenche rien)
+      if (b.impact > BOING_MIN) {
         const q = clamp(b.impact / 1400, 0, 1) * (reduced ? 0.5 : 1);
         if (q > b.sq) b.sq = q;
-        b.impact = 0;
       }
+      b.impact = 0;
     }
     for (const ev of pairMap.values()) { boing(ev.a.R, ev.v, 0); boing(ev.b.R, ev.v, 0.015); }
     pairMap.clear();
@@ -1039,9 +1040,8 @@
         if (dur < 180 && moved < 8) pichenette(b, rec.P.x, rec.P.y);
       }
     } else if (!rec.b && dur < 250 && moved < 10) {
-      const b = spawnAt(rec.P.x, rec.P.y, true);
+      spawnAt(rec.P.x, rec.P.y, true);
       announce('Gelée ajoutée');
-      void b;
     }
     if (!wob || ![...pointers.values()].some(r => r.grab)) wobbleStop();
     wake();
@@ -1263,7 +1263,7 @@
   togSound.addEventListener('change', () => { S.soundOn = togSound.checked; saveS(); if (S.soundOn) ensureAudio(); else wobbleStop(); syncIcons(); });
   $('btnReset').addEventListener('click', resetSettings);
 
-  reducedMQ.addEventListener && reducedMQ.addEventListener('change', e => { reduced = e.matches; wake(); });
+  reducedMQ.addEventListener('change', e => { reduced = e.matches; wake(); });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       wobbleStop();
@@ -1282,8 +1282,6 @@
   const START = [[0.2, 72], [0.42, 54], [0.62, 64], [0.8, 48]];
   START.forEach(([fx, r], i) => {
     setTimeout(() => {
-      const [lo, hi] = SIZES[S.size];
-      void lo; void hi;
       const R = r * s;
       const x = clamp(W * fx, R, W - R);
       const b = makeBlob(x, R + 6 * s, R, nextHex(), false);
