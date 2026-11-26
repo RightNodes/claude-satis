@@ -2593,7 +2593,9 @@
     raf = 0;
     const minDt = S.fpsCap > 0 ? 1000 / S.fpsCap - 1.5 : 0;
     if (now - last < minDt) { raf = requestAnimationFrame(frame); return; }
-    const rawDt = max(0.0005, (now - last) / 1000), dt = min(0.05, rawDt);
+    // wake() stamps `last` with performance.now(), which can be later than the frame's own timestamp:
+    // such a gap (or one after a long idle) counts as a single nominal frame, so FPS and dt stay sane
+    const gap = (now - last) / 1000, rawDt = gap > 0 && gap < 0.25 ? gap : 1 / 60, dt = min(0.05, rawDt);
     last = now;
     fpsEMA += (1 / rawDt - fpsEMA) * 0.08;
     const dtSim = paused ? 0 : dt;

@@ -293,9 +293,11 @@
 
   @media (max-width: 639px) {
     .iconbtn { width: 44px; height: 44px; }
-    header { max-width: calc(100vw - 150px); padding-top: max(14px, env(safe-area-inset-top)); }
+    header { max-width: calc(100vw - 226px); padding-top: max(14px, env(safe-area-inset-top)); }
     .back { margin-bottom: 6px; }
-    .plate { padding: 6px 10px 8px 10px; }
+    .plate { padding: 6px 10px 8px 10px; max-width: 100%; min-width: 0; }
+    .plate > * { min-width: 0; overflow-wrap: anywhere; }
+    .next { white-space: normal; min-width: 0; }
     .bar { gap: 4px; right: max(10px, env(safe-area-inset-right)); }
     .dbtn .lbl { display: none; }
     .dbtn { min-width: 44px; height: 44px; padding: 0; }
@@ -2666,6 +2668,7 @@
       if (px > W - 4 || py > H - 4) continue;
       const st = { id: stoneId++, x: px / cs, y: py / cs, r: g.r * rec.cs / cs, asp: g.asp, rot: g.rot, hue: clamp(g.hue | 0, 0, HUES.length - 1), seed: g.seed, sp: g.sp * rec.cs / cs, A: g.A * rec.cs / cs, state: 'rest', sc: 1, al: 1, dx: px, dy: py, t: 0, spr: null, shd: null, ver: -1, side: 1, sideStroke: 0, hitStroke: 0, veins: !!g.veins };
       stones.push(st);
+      buildSprite(st); // restored stones have no sprite yet: without it they are invisible
     }
     syncStones();
     if (rec.sable && SANDS[rec.sable] && isUnl(rec.sable)) { S.sand = rec.sable; }
@@ -2829,7 +2832,7 @@
     K.shift = e.shiftKey; K.alt = e.altKey;
     if (e.key.startsWith('Arrow') && onCanvas) {
       e.preventDefault(); poke();
-      if (!K.show) { if (!hover.in && K.x === 0 && K.y === 0) { K.x = W / 2; K.y = H / 2; } else if (hover.in && P.type === 'mouse') { K.x = hover.x; K.y = hover.y; } }
+      if (!K.show) { if (hover.in && P.type === 'mouse' && (hover.x || hover.y)) { K.x = hover.x; K.y = hover.y; } else if (K.x === 0 && K.y === 0) { K.x = W / 2; K.y = H / 2; } }
       K.show = true; K.keys[e.key] = true; wake(); return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -2841,7 +2844,13 @@
         if (st) { pickStone(st); held.tx = K.x; held.ty = K.y; K.holding = true; announce('Galet pris'); }
         else if (K.holding && held) { dropHeld(K.x, K.y); K.holding = false; }
         else { liftNew(K.x, K.y); held.tx = K.x; held.ty = K.y; dropHeld(K.x, K.y); }
-      } else if (K.pen) { K.pen = false; endStroke(); announce(S.tool === 'broom' ? 'Balai levé' : 'Râteau levé'); }
+      } else if (K.pen) {
+        K.pen = false;
+        // same as a pointer tap: a rake lowered and lifted without real travel leaves pricks
+        if (rk.on && rk.tool === 'rake' && !rk.est && !rk.releasing) { const x = rk.x, y = rk.y; abortStroke(); rakeTap(x, y); }
+        else endStroke();
+        announce(S.tool === 'broom' ? 'Balai levé' : 'Râteau levé');
+      }
       else { K.pen = true; strokeStart(K.x / cs, K.y / cs, S.tool); drv.active = true; drv.tx = K.x / cs; drv.ty = K.y / cs; announce(S.tool === 'broom' ? 'Balai baissé' : 'Râteau baissé'); }
       wake(); return;
     }
@@ -2870,7 +2879,7 @@
     if (K.keys[e.key]) { delete K.keys[e.key]; }
   });
   window.addEventListener('blur', () => { K.keys = {}; });
-  function kbdInit() { if (!K.show) { K.show = true; if (K.x === 0 && K.y === 0) { K.x = hover.in ? hover.x : W / 2; K.y = hover.in ? hover.y : H / 2; } } wake(); }
+  function kbdInit() { if (!K.show) { K.show = true; if (K.x === 0 && K.y === 0) { const hv = hover.in && (hover.x || hover.y); K.x = hv ? hover.x : W / 2; K.y = hv ? hover.y : H / 2; } } wake(); }
   canvas.addEventListener('blur', () => { if (K.pen) { K.pen = false; endStroke(); } K.show = false; wake(); });
 
   /* ---------- actions ---------- */

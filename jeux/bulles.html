@@ -150,7 +150,7 @@
     transition: opacity 0.8s ease;
   }
   .hint.gone { opacity: 0; }
-  .hint.toast { bottom: calc(58px + env(safe-area-inset-bottom)); transition: opacity 0.4s ease; }
+  .hint.toast { transition: opacity 0.4s ease; } /* same slot as the hint, below the play field */
   .title-pop {
     position: fixed;
     left: 50%;
@@ -323,7 +323,6 @@
     .prog { width: 90px; }
     .bar { gap: 6px; right: max(12px, env(safe-area-inset-right)); }
     .hint { bottom: calc(6px + env(safe-area-inset-bottom)); font-size: 14px; }
-    .hint.toast { bottom: calc(44px + env(safe-area-inset-bottom)); }
     .fps { top: 70px; right: 12px; }
   }
   @media (max-height: 480px) and (orientation: landscape) {
@@ -332,7 +331,6 @@
     .back { margin: 0 4px 0 0; align-self: center; }
     .stat { margin: 0; }
     .hint { bottom: calc(4px + env(safe-area-inset-bottom)); }
-    .hint.toast { bottom: calc(26px + env(safe-area-inset-bottom)); }
   }
   @media (prefers-reduced-motion: reduce) {
     .drawer, .drawer.open, .hint, .toast, #vig, .prog > i { transition: none; }
@@ -882,8 +880,12 @@
     readSafe();
     const land = H <= 480 && W > H;
     const margin = Math.max(16, safe.l, safe.r);
-    const top = land ? 56 : mobile ? Math.max(100, 84 + safe.t) : Math.max(18, safe.t);
-    const bottom = mobile ? Math.max(28, safe.b + 16) : 20 + safe.b;
+    let top = land ? 56 : mobile ? Math.max(100, 84 + safe.t) : Math.max(18, safe.t);
+    // never let the grid slide under the title block (its real height depends on the font)
+    const hdr = document.querySelector('header');
+    if (hdr && !document.body.classList.contains('ui-hidden')) top = Math.max(top, hdr.getBoundingClientRect().bottom + 12);
+    // reserve room for the two-line hint / toast under the grid on phones
+    const bottom = mobile ? Math.max(46, safe.b + 46) : 20 + safe.b;
     const availW = Math.max(60, W - 2 * margin), availH = Math.max(60, H - top - bottom);
     let d = clamp(Math.min(W, H) / 10.5, 44, 72) * SIZES[S.size][1];
     let cols, rows, n, it = 0;
@@ -2145,6 +2147,7 @@
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.remove('gone');
+    hintEl.classList.add('gone'); // both share the bottom slot: never show them together
     clearTimeout(toast.t);
     toast.t = setTimeout(() => toastEl.classList.add('gone'), 2500);
   }
@@ -2651,6 +2654,7 @@
   countInit = true;
   forceDraw = true;
   wake();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!fin && !trans) relayout(); }).catch(() => {});
   if (/[#&?]debug/.test(location.href)) {
     window.__b = {
       get N() { return N; }, get remaining() { return remaining; }, get tier() { return tier; }, get E() { return E; }, get sheetNo() { return sheetNo; },
